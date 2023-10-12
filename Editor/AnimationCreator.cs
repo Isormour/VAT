@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System;
 
 public class AnimationCreator : EditorWindow
 {
@@ -15,8 +16,6 @@ public class AnimationCreator : EditorWindow
     public struct VertInfo
     {
         public Vector3 position;
-        public Vector3 normal;
-        public Vector3 tangent;
     }
 
     [MenuItem("DB/VATBaker")]
@@ -92,14 +91,10 @@ public class AnimationCreator : EditorWindow
                 skin.BakeMesh(mesh);
 
                 var verexArry = mesh.vertices;
-                var normalArry = mesh.normals;
-                var tangentArray = mesh.tangents;
                 infoList.AddRange(Enumerable.Range(0, vCount)
                     .Select(idx => new VertInfo()
                     {
                         position = verexArry[idx],
-                        normal = normalArry[idx],
-                        tangent = tangentArray[idx],
                     })
                 );
             }
@@ -118,8 +113,14 @@ public class AnimationCreator : EditorWindow
             buffer.Release();
 
 #if UNITY_EDITOR
+
+           
             var folderName = "BakedAnimationTex";
             var folderPath = Path.Combine("Assets/VAT", folderName);
+
+            if (!AssetDatabase.IsValidFolder("Assets/VAT"))
+                AssetDatabase.CreateFolder("Assets", "VAT");
+
             if (!AssetDatabase.IsValidFolder(folderPath))
                 AssetDatabase.CreateFolder("Assets/VAT", folderName);
 
