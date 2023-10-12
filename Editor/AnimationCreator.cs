@@ -7,7 +7,6 @@ using System;
 
 public class AnimationCreator : EditorWindow
 {
-
     public ComputeShader infoTexGen;
     public Material animBaseMaterial;
     public AnimationClip[] clips;
@@ -141,13 +140,14 @@ public class AnimationCreator : EditorWindow
                 mat.SetFloat("_Loop", 1f);
                 mat.EnableKeyword("ANIM_LOOP");
             }
-
+            
             var go = new GameObject(name + "." + clip.name);
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
             go.AddComponent<MeshFilter>().sharedMesh = skin.sharedMesh;
 
             AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, pRt.name + ".asset"));
             AssetDatabase.CreateAsset(mat, Path.Combine(subFolderPath, string.Format("{0}.{1}.animTex.asset", name, clip.name)));
+            
             PrefabUtility.SaveAsPrefabAsset(go, Path.Combine(folderPath, go.name + ".prefab").Replace("\\", "/"));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
