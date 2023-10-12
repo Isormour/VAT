@@ -3,7 +3,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using System;
 
 public class AnimationCreator : EditorWindow
 {
@@ -147,7 +146,23 @@ public class AnimationCreator : EditorWindow
 
             AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, pRt.name + ".asset"));
             AssetDatabase.CreateAsset(mat, Path.Combine(subFolderPath, string.Format("{0}.{1}.animTex.asset", name, clip.name)));
-            
+            AnimationVAT VATObject = CreateInstance<AnimationVAT>();
+            VATObject.VATTexture = posTex;
+            VATObject.Duration = clip.averageDuration;
+            VATObject.Mat = mat;
+
+            AnimationVAT.VATEvent[] events =  new AnimationVAT.VATEvent[clip.events.Length];
+            for (int i = 0; i < clip.events.Length; i++)
+            {
+                AnimationVAT.VATEvent tempEvent = new AnimationVAT.VATEvent();
+                tempEvent.Time = clip.events[i].time/clip.length;
+                tempEvent.Name = clip.events[i].functionName;
+                events[i] = tempEvent;
+            }
+
+            VATObject.Events = events;
+            VATObject.IsLooped = clip.isLooping;
+            AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + clip.name + ".asset"));
             PrefabUtility.SaveAsPrefabAsset(go, Path.Combine(folderPath, go.name + ".prefab").Replace("\\", "/"));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
