@@ -11,6 +11,7 @@ public class AnimatorVAT : MonoBehaviour
     float animationTime = 0;
     int currentStateIndex = 0;
     int eventIndex = 0;
+    public float SpeedMultiplier = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
     public void Start()
@@ -39,7 +40,7 @@ public class AnimatorVAT : MonoBehaviour
     }
     void UpdateTime()
     {
-        animationTime += Time.deltaTime;
+        animationTime += Time.deltaTime * SpeedMultiplier;
         if (states[currentStateIndex].VAT.IsLooped)
             if (animationTime >= states[currentStateIndex].VAT.Duration)
             {
