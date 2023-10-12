@@ -40,11 +40,11 @@ public class AnimationCreator : EditorWindow
     {
         if (infoTexGen == null)
         {
-            infoTexGen = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.db.VAT/MeshInfoTextureGen.compute");
+            infoTexGen = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.db.VAT/Graphics/MeshInfoTextureGen.compute");
         }
         if (animBaseMaterial == null)
         {
-            animBaseMaterial = AssetDatabase.LoadAssetAtPath<Material>("Packages/com.db.VAT/AnimatedMatBasic.mat");
+            animBaseMaterial = AssetDatabase.LoadAssetAtPath<Material>("Packages/com.db.VAT/Graphics/AnimatedMatBasic.mat");
         }
     }
     void DrawButton()
