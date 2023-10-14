@@ -130,26 +130,10 @@ public class AnimationCreator : EditorWindow
             var posTex = RenderTextureToTexture2D.Convert(pRt);
             Graphics.CopyTexture(pRt, posTex);
 
-            var mat = new Material(animBaseMaterial);
-            mat.SetTexture("_MainTex", skin.sharedMaterial.mainTexture);
-            mat.SetTexture("_PosTex", posTex);
-            mat.SetFloat("_Length", clip.length);
-            if (clip.wrapMode == WrapMode.Loop)
-            {
-                mat.SetFloat("_Loop", 1f);
-                mat.EnableKeyword("ANIM_LOOP");
-            }
-            
-            var go = new GameObject(name + "." + clip.name);
-            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
-            go.AddComponent<MeshFilter>().sharedMesh = skin.sharedMesh;
-
             AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, pRt.name + ".asset"));
-            AssetDatabase.CreateAsset(mat, Path.Combine(subFolderPath, string.Format("{0}.{1}.animTex.asset", name, clip.name)));
             AnimationVAT VATObject = CreateInstance<AnimationVAT>();
             VATObject.VATTexture = posTex;
             VATObject.Duration = clip.averageDuration;
-            VATObject.Mat = mat;
 
             AnimationVAT.VATEvent[] events =  new AnimationVAT.VATEvent[clip.events.Length];
             for (int i = 0; i < clip.events.Length; i++)
@@ -163,7 +147,6 @@ public class AnimationCreator : EditorWindow
             VATObject.Events = events;
             VATObject.IsLooped = clip.isLooping;
             AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + clip.name + ".asset"));
-            PrefabUtility.SaveAsPrefabAsset(go, Path.Combine(folderPath, go.name + ".prefab").Replace("\\", "/"));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 #endif

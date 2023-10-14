@@ -1,12 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Animations;
 using UnityEngine;
 
-public class AnimatorVAT : MonoBehaviour
+
+public class AnimatorVAT
 {
     public StateToVAT[] states;
-    public new MeshRenderer renderer;
+    public MeshRenderer renderer;
     MaterialPropertyBlock materialBlock;
     float animationTime = 0;
     int currentStateIndex = 0;
@@ -14,17 +12,24 @@ public class AnimatorVAT : MonoBehaviour
     public float SpeedMultiplier = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
-    public void Start()
+    public AnimatorVAT(MaterialPropertyBlock matBlock, MeshRenderer renderer, StateToVAT[] states)
     {
-        materialBlock = new MaterialPropertyBlock();
+        materialBlock = matBlock;
+        this.renderer = renderer;
+        this.states = states;
     }
-    public void Update()
+
+    public void Update(float deltaTime)
     {
-        UpdateTime();
+        UpdateTime(deltaTime);
         CheckAnimationEvents();
     }
     public void Play(string name)
     {
+        if (states[currentStateIndex].StateName == name)
+        {
+            return;
+        }
         for (int i = 0; i < states.Length; i++)
         {
             if (states[i].StateName == name)
@@ -32,15 +37,16 @@ public class AnimatorVAT : MonoBehaviour
                 animationTime = 0;
                 eventIndex = 0;
                 currentStateIndex = i;
-                materialBlock.SetTexture("VAT", states[i].VAT.VATTexture);
+                materialBlock.SetTexture("_AnimationTexture", states[i].VAT.VATTexture);
                 renderer.SetPropertyBlock(materialBlock);
                 break;
             }
         }
     }
-    void UpdateTime()
+    void UpdateTime(float deltaTime)
     {
-        animationTime += Time.deltaTime * SpeedMultiplier;
+        float animationSpeed = states[currentStateIndex].VAT.AnimationSpeed;
+        animationTime += deltaTime * SpeedMultiplier * animationSpeed;
         if (states[currentStateIndex].VAT.IsLooped)
             if (animationTime >= states[currentStateIndex].VAT.Duration)
             {
@@ -60,12 +66,12 @@ public class AnimatorVAT : MonoBehaviour
         {
             return;
         }
-        if (states[currentStateIndex].VAT.Events[eventIndex].Time > animationTime)
+        if (states[currentStateIndex].VAT.Events[eventIndex].Time < animationTime)
         {
             OnVATEvent?.Invoke(states[currentStateIndex].StateName, states[currentStateIndex].VAT.Events[eventIndex].Name);
-            Debug.Log("State "+ states[currentStateIndex].StateName+" event "+ states[currentStateIndex].VAT.Events[eventIndex].Name);
             eventIndex++;
         }
+
     }
 }
 [System.Serializable]

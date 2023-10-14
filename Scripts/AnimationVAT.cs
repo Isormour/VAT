@@ -5,10 +5,10 @@ using UnityEngine;
 public class AnimationVAT : ScriptableObject
 {
     public Texture2D VATTexture;
-    public Material Mat;
     public float Duration;
     public VATEvent[] Events;
     public bool IsLooped = false;
+    public float AnimationSpeed =1;
 
     [System.Serializable]
     public struct VATEvent {
