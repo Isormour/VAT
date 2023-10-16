@@ -14,6 +14,8 @@ public class AnimationCreator : EditorWindow
     public struct VertInfo
     {
         public Vector3 position;
+        public Vector3 normal;
+        public Vector3 tangent;
     }
 
     [MenuItem("DB/VATBaker")]
@@ -74,8 +76,12 @@ public class AnimationCreator : EditorWindow
 
             var pRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
             pRt.name = string.Format("{0}.{1}.posTex", name, clip.name);
+            var nRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
+            nRt.name = string.Format("{0}.{1}.normTex", name, clip.name);
+            var tRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
+            tRt.name = string.Format("{0}.{1}.tangentTex", name, clip.name);
 
-            foreach (var rt in new[] { pRt })
+            foreach (var rt in new[] { pRt, nRt, tRt })
             {
                 rt.enableRandomWrite = true;
                 rt.Create();
@@ -88,11 +94,12 @@ public class AnimationCreator : EditorWindow
                 clip.SampleAnimation(model, dt * i);
                 skin.BakeMesh(mesh);
 
-                var verexArry = mesh.vertices;
                 infoList.AddRange(Enumerable.Range(0, vCount)
                     .Select(idx => new VertInfo()
                     {
-                        position = verexArry[idx],
+                        position = mesh.vertices[idx],
+                        normal = mesh.normals[idx],
+                        tangent = mesh.tangents[idx]
                     })
                 );
             }
@@ -106,6 +113,8 @@ public class AnimationCreator : EditorWindow
             infoTexGen.SetInt("VertCount", vCount);
             infoTexGen.SetBuffer(kernel, "Info", buffer);
             infoTexGen.SetTexture(kernel, "OutPosition", pRt);
+            infoTexGen.SetTexture(kernel, "OutNormal", nRt);
+            infoTexGen.SetTexture(kernel, "OutTangent", tRt);
             infoTexGen.Dispatch(kernel, vCount / (int)x + 1, frames / (int)y + 1, 1);
 
             buffer.Release();
@@ -128,11 +137,23 @@ public class AnimationCreator : EditorWindow
                 AssetDatabase.CreateFolder(folderPath, subFolder);
 
             var posTex = RenderTextureToTexture2D.Convert(pRt);
+            var normTex = RenderTextureToTexture2D.Convert(nRt);
+            var tanTex = RenderTextureToTexture2D.Convert(tRt);
+
             Graphics.CopyTexture(pRt, posTex);
+            Graphics.CopyTexture(nRt, normTex);
+            Graphics.CopyTexture(tRt, tanTex);
 
             AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, pRt.name + ".asset"));
+            AssetDatabase.CreateAsset(normTex, Path.Combine(subFolderPath, nRt.name + ".asset"));
+            AssetDatabase.CreateAsset(tanTex, Path.Combine(subFolderPath, tRt.name + ".asset"));
+
+
+
             AnimationVAT VATObject = CreateInstance<AnimationVAT>();
             VATObject.VATTexture = posTex;
+            VATObject.VATNormal = normTex;
+            VATObject.VATTangent = tanTex;
             VATObject.Duration = clip.averageDuration;
 
             AnimationVAT.VATEvent[] events =  new AnimationVAT.VATEvent[clip.events.Length];
@@ -146,6 +167,18 @@ public class AnimationCreator : EditorWindow
 
             VATObject.Events = events;
             VATObject.IsLooped = clip.isLooping;
+
+            posTex.filterMode = FilterMode.Point;
+            normTex.filterMode = FilterMode.Point;
+            tanTex.filterMode = FilterMode.Point;
+
+            if (!clip.isLooping)
+            {
+                posTex.wrapMode = TextureWrapMode.Clamp;
+                normTex.wrapMode = TextureWrapMode.Clamp;
+                tanTex.wrapMode = TextureWrapMode.Clamp;
+            }
+
             AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + clip.name + ".asset"));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

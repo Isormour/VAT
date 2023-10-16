@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_37E9309F:
-        m_Texture: {fileID: 2800000, guid: 3d1cfbc55612b2a43a31a466cf4dc4a5, type: 2}
+        m_Texture: {fileID: 2800000, guid: 1e8c11dfcae35da4e84bd45b47eea7c8, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_83948D89:
@@ -64,6 +64,18 @@ Material:
         m_Texture: {fileID: 2800000, guid: f61f5a70d23c3b64dafda8b476a559b4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_e62ca93403fb4d5a8ba271781db001a3_Out_0_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VATNormalTexture:
+        m_Texture: {fileID: 2800000, guid: 4bd0555891cd38f4f95df9bd1886bec0, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VATTangentTexture:
+        m_Texture: {fileID: 2800000, guid: cb6e172913483234baa26efd42204be2, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -78,8 +90,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - Vector1_C958745B: 0.97
+    - Vector1_C958745B: 0.15
+    - _AnimationTime: -0.6
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _VATAnimationTime: 0.03
+    - _VATDuration: 1
     m_Colors: []
   m_BuildTextureStacks: []

@@ -37,7 +37,9 @@ public class AnimatorVAT
                 animationTime = 0;
                 eventIndex = 0;
                 currentStateIndex = i;
-                materialBlock.SetTexture("_AnimationTexture", states[i].VAT.VATTexture);
+                materialBlock.SetTexture("_VATAnimationTexture", states[i].VAT.VATTexture);
+                materialBlock.SetTexture("_VATNormalTexture", states[i].VAT.VATNormal);
+                materialBlock.SetTexture("_VATTangentTexture", states[i].VAT.VATTangent);
                 renderer.SetPropertyBlock(materialBlock);
                 break;
             }
@@ -53,7 +55,7 @@ public class AnimatorVAT
                 animationTime = 0;
                 eventIndex = 0;
             }
-        materialBlock.SetFloat("_AnimationTime", animationTime);
+        materialBlock.SetFloat("_VATAnimationTime", animationTime);
         renderer.SetPropertyBlock(materialBlock);
     }
     void CheckAnimationEvents()

@@ -5,6 +5,8 @@ using UnityEngine;
 public class AnimationVAT : ScriptableObject
 {
     public Texture2D VATTexture;
+    public Texture2D VATNormal;
+    public Texture2D VATTangent;
     public float Duration;
     public VATEvent[] Events;
     public bool IsLooped = false;
