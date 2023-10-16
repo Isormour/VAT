@@ -17,6 +17,11 @@ public class AnimatorVAT
         materialBlock = matBlock;
         this.renderer = renderer;
         this.states = states;
+
+        materialBlock.SetTexture("_VATAnimationTexture", states[0].VAT.VATTexture);
+        materialBlock.SetTexture("_VATNormalTexture", states[0].VAT.VATNormal);
+        materialBlock.SetTexture("_VATTangentTexture", states[0].VAT.VATTangent);
+        renderer.SetPropertyBlock(materialBlock);
     }
 
     public void Update(float deltaTime)
