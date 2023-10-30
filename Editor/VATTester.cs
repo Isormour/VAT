@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
 public class VATTester : EditorWindow
 {
-   
     public MeshRenderer ModelRenderer;
     MaterialPropertyBlock RendererProperties;
     float animTime = 0;
@@ -24,11 +21,22 @@ public class VATTester : EditorWindow
     private void OnGUI()
     {
         ModelRenderer = (MeshRenderer)EditorGUILayout.ObjectField("ModelRenderer", ModelRenderer, typeof(MeshRenderer),true);
-
+        if (ModelRenderer != null)
+        {
+            if (GUILayout.Button("Toggle Anim"))
+            {
+                ToggleAnimation();
+            }
+        }
+    }
+    private void Update()
+    {
         if (ModelRenderer != null)
         {
             UpdateTime();
             UpdateRenderer();
+            if (AnimationMode.InAnimationMode())
+                SceneView.RepaintAll();
         }
     }
     void UpdateTime()
@@ -46,5 +54,12 @@ public class VATTester : EditorWindow
     {
         RendererProperties.SetFloat("_VATAnimationTime", animTime);
         ModelRenderer.SetPropertyBlock(RendererProperties);
+    }
+    void ToggleAnimation()
+    {
+        if (AnimationMode.InAnimationMode())
+            AnimationMode.StopAnimationMode();
+        else
+            AnimationMode.StartAnimationMode();
     }
 }

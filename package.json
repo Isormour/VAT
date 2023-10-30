@@ -9,7 +9,8 @@
   "changelogUrl": "https://example.com/changelog.html",
   "licensesUrl": "https://example.com/licensing.html",
   "dependencies": {
-    "com.unity.textmeshpro": "3.0.6"
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.editorcoroutines": "1.0.0"
   },
   "author": {
     "name": "Isormour",

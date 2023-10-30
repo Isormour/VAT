@@ -27,7 +27,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_37E9309F:
-        m_Texture: {fileID: 2800000, guid: 1e8c11dfcae35da4e84bd45b47eea7c8, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_83948D89:
@@ -68,12 +68,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _VATAnimationTexture:
+        m_Texture: {fileID: 2800000, guid: b6ca0bb5c99bc3041a49cd992c3a591d, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _VATNormalTexture:
-        m_Texture: {fileID: 2800000, guid: 4bd0555891cd38f4f95df9bd1886bec0, type: 2}
+        m_Texture: {fileID: 2800000, guid: ac6ab23781caa314aa55fbb778de0341, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATTangentTexture:
-        m_Texture: {fileID: 2800000, guid: cb6e172913483234baa26efd42204be2, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -94,7 +98,7 @@ Material:
     - _AnimationTime: -0.6
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _VATAnimationTime: 0.03
+    - _VATAnimationTime: 0.26
     - _VATDuration: 1
     m_Colors: []
   m_BuildTextureStacks: []

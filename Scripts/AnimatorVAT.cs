@@ -1,29 +1,59 @@
 using UnityEngine;
 
-
 public class AnimatorVAT
 {
-    public StateToVAT[] states;
-    public MeshRenderer renderer;
+    public bool inTransition { private set; get; } = false;
+    public AnimationVAT CurrentVAT { private set; get; }
+    public VATState currentState { private set; get; }
+    public TransitionVAT currentTransition { private set; get; } = null;
+    public float animationTime { private set; get; } = 0;
+    public int eventIndex { private set; get; } = 0;
+
+    AnimatorControllerVAT animatorController;
     MaterialPropertyBlock materialBlock;
-    float animationTime = 0;
-    int currentStateIndex = 0;
-    int eventIndex = 0;
+
+    public MeshRenderer renderer;
     public float SpeedMultiplier = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
-    public AnimatorVAT(MaterialPropertyBlock matBlock, MeshRenderer renderer, StateToVAT[] states)
+    
+    public AnimatorVAT(MaterialPropertyBlock matBlock, MeshRenderer renderer, AnimatorControllerVAT animatorController)
     {
         materialBlock = matBlock;
         this.renderer = renderer;
-        this.states = states;
+        this.animatorController = animatorController;
 
-        materialBlock.SetTexture("_VATAnimationTexture", states[0].VAT.VATTexture);
-        materialBlock.SetTexture("_VATNormalTexture", states[0].VAT.VATNormal);
-        materialBlock.SetTexture("_VATTangentTexture", states[0].VAT.VATTangent);
+        SetState(animatorController.States[0]);
         renderer.SetPropertyBlock(materialBlock);
     }
+    VATState GetState(string name)
+    {
+        for (int i = 0; i < this.animatorController.States.Length; i++)
+        {
+            if (this.animatorController.States[i].StateName == name)
+            {
+                return this.animatorController.States[i];
+            }
+        }
+        Debug.LogError("State not found =" + name);
+        return null;
+    }
+    void SetState(VATState state)
+    {
+        currentState = state;
+        SetVAT(currentState.VAT);
+    }
+    void SetVAT(AnimationVAT VAT)
+    {
 
+        animationTime = 0;
+        eventIndex = 0;
+        materialBlock.SetTexture("_VATAnimationTexture", VAT.VATTexture);
+        materialBlock.SetTexture("_VATNormalTexture", VAT.VATNormal);
+        materialBlock.SetTexture("_VATTangentTexture", VAT.VATTangent);
+        CurrentVAT = VAT;
+        renderer.SetPropertyBlock(materialBlock);
+    }
     public void Update(float deltaTime)
     {
         UpdateTime(deltaTime);
@@ -31,59 +61,99 @@ public class AnimatorVAT
     }
     public void Play(string name)
     {
-        if (states[currentStateIndex].StateName == name)
+        // get state
+        VATState nextState = GetState(name);
+        if (nextState == null) return;
+
+        TransitionVAT transition = GetTransition(nextState);
+
+        if (transition != null && !inTransition)
         {
+            currentTransition = transition;
             return;
         }
-        for (int i = 0; i < states.Length; i++)
+
+        //set new state w/o transition
+        if (nextState.StateName != currentState.StateName)
         {
-            if (states[i].StateName == name)
+            SetState(nextState);
+        }
+    }
+    TransitionVAT GetTransition(VATState toState)
+    {
+        TransitionVAT transition = null;
+        for (int i = 0; i < currentState.Transitions.Length; i++)
+        {
+            if (currentState.Transitions[i].To.StateName == toState.StateName)
             {
-                animationTime = 0;
-                eventIndex = 0;
-                currentStateIndex = i;
-                materialBlock.SetTexture("_VATAnimationTexture", states[i].VAT.VATTexture);
-                materialBlock.SetTexture("_VATNormalTexture", states[i].VAT.VATNormal);
-                materialBlock.SetTexture("_VATTangentTexture", states[i].VAT.VATTangent);
-                renderer.SetPropertyBlock(materialBlock);
-                break;
+                return currentState.Transitions[i];
             }
         }
+        return transition;
     }
     void UpdateTime(float deltaTime)
     {
-        float animationSpeed = states[currentStateIndex].VAT.AnimationSpeed;
+        float animationSpeed = currentState.VAT.AnimationSpeed;
         animationTime += deltaTime * SpeedMultiplier * animationSpeed;
-        if (states[currentStateIndex].VAT.IsLooped)
-            if (animationTime >= states[currentStateIndex].VAT.Duration)
+
+        if (currentTransition != null)
+        {
+            if (inTransition)
             {
-                animationTime = 0;
-                eventIndex = 0;
+                float transitionTime = animationTime;
+                if (transitionTime >= currentTransition.Length)
+                {
+
+                    Play(currentTransition.To.StateName);
+                    animationTime = currentTransition.ToTransitionTime;
+                    currentTransition = null;
+                    inTransition = false;
+                }
             }
-        materialBlock.SetFloat("_VATAnimationTime", animationTime);
+            else
+            {
+                float transitionTime = animationTime - currentTransition.FromTransitionStart;
+                if (Mathf.Abs(transitionTime)<0.01f)
+                {
+                    inTransition = true;
+                    SetVAT(currentTransition.Transition);
+                }
+            }
+        }
+        UpdateCurrentState(deltaTime);
+    }
+    void UpdateCurrentState(float deltaTime)
+    {
+        if (!inTransition && currentState.VAT.IsLooped && animationTime >= CurrentVAT.Duration)
+        {
+            animationTime = 0;
+            eventIndex = 0;
+        }
+        materialBlock.SetFloat("_VATAnimationTime", animationTime / CurrentVAT.Duration);
         renderer.SetPropertyBlock(materialBlock);
     }
     void CheckAnimationEvents()
     {
-        if (states[currentStateIndex].VAT.Events.Length <= 0)
+        if (currentState.VAT.Events.Length <= 0)
         {
             return;
         }
-        if (eventIndex >= states[currentStateIndex].VAT.Events.Length)
+        if (eventIndex >= currentState.VAT.Events.Length)
         {
             return;
         }
-        if (states[currentStateIndex].VAT.Events[eventIndex].Time < animationTime)
+        if (currentState.VAT.Events[eventIndex].Time < animationTime * currentState.VAT.Duration)
         {
-            OnVATEvent?.Invoke(states[currentStateIndex].StateName, states[currentStateIndex].VAT.Events[eventIndex].Name);
+            OnVATEvent?.Invoke(currentState.StateName, currentState.VAT.Events[eventIndex].Name);
             eventIndex++;
         }
 
     }
 }
 [System.Serializable]
-public struct StateToVAT
+public class VATState
 {
     public string StateName;
     public AnimationVAT VAT;
+    public TransitionVAT[] Transitions;
 }

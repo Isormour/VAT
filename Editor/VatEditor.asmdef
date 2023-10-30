@@ -2,7 +2,8 @@
     "name": "VatEditor",
     "rootNamespace": "",
     "references": [
-        "GUID:13918114b0c9a6d4b9e72fd345c36513"
+        "GUID:13918114b0c9a6d4b9e72fd345c36513",
+        "GUID:478a2357cc57436488a56e564b08d223"
     ],
     "includePlatforms": [
         "Editor"
