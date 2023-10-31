@@ -74,6 +74,7 @@ public class AnimationCreator : EditorWindow
 
     void BakeForClips()
     {
+        if (!model.gameObject.activeInHierarchy) model.gameObject.SetActive(true);
         var animator = model.GetComponent<Animator>();
         clips = animator.runtimeAnimatorController.animationClips;
         var skin = model.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -175,25 +176,27 @@ public class AnimationCreator : EditorWindow
             int transitionCount = StateToVATTransition[states[i].state].Length;
             animatorController.States[i].Transitions = new TransitionVAT[transitionCount];
         }
-
+        AnimatorState defaultState = stateMachine.defaultState;
         //create vat textures for transitions
         for (int i = 0; i < states.Length; i++)
         {
             for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
             {
+                stateMachine.defaultState = states[i].state;
+                
                 AnimatorStateTransition animTransition = StateToTransition[states[i].state][j];
                 TransitionVAT transitionVat  = CreateInstance<TransitionVAT>();
                 transitionVat.From = animatorController.States[i];
                 transitionVat.To = animatorController.GetState(animTransition.destinationState.name);
                 transitionVat.FromTransitionStart = states[i].state.motion.averageDuration*animTransition.exitTime;
                 transitionVat.Length = animTransition.duration;
-                transitionVat.ToTransitionStart = animTransition.offset;
+                transitionVat.ToTransitionStart = animTransition.destinationState.motion.averageDuration * animTransition.offset;
                 string transitionName = states[i].state.name + "-" + animTransition.destinationState.name;
                 CreateVATTransitionTexture(animator, states[i].state, texWidth, skin, mesh, vCount, subFolderPath, transitionName, infoTexGen, transitionVat);
                 animatorController.States[i].Transitions[j] = transitionVat;
             }
         }
-
+        stateMachine.defaultState = defaultState;
         AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
 
     }
@@ -205,14 +208,14 @@ public class AnimationCreator : EditorWindow
         for (var i = 0; i < frames; i++)
         {
             clip.SampleAnimation(modelObject, dt * i);
-            skin.BakeMesh(mesh);
+            skin.BakeMesh(mesh,true);
 
             infoList.AddRange(Enumerable.Range(0, vCount)
                 .Select(idx => new VertInfo()
                 {
-                    position = mesh.vertices[idx],
-                    normal = mesh.normals[idx],
-                    tangent = mesh.tangents[idx]
+                    position = mesh.vertices[idx]*skin.transform.localScale.x,
+                    normal = mesh.normals[idx]* skin.transform.localScale.y,
+                    tangent = mesh.tangents[idx]* skin.transform.localScale.z
                 })
             );
         }
@@ -223,22 +226,32 @@ public class AnimationCreator : EditorWindow
     public void CreateVATTransitionTexture(Animator anim, AnimatorState state, int texWidth, SkinnedMeshRenderer skin, Mesh mesh, int vCount, string subFolderPath, string transitionName, ComputeShader shader,TransitionVAT transition)
     {
         AnimationClip clip = (AnimationClip)state.motion;
+        Debug.Log("transition leng1 = " + transition.Length);
         var frames = Mathf.NextPowerOfTwo((int)(transition.Length/ AnimDelta));
-        var dt = clip.length / frames;
+        var dt = transition.Length / frames;
+
+        transition.Length = frames * dt;
+
+        Debug.Log("transition leng2 = " + transition.Length);
+        Debug.Log("transition ToStart = " + transition.ToTransitionStart);
+
         var infoList = new List<VertInfo>();
+        anim.Rebind();
         anim.Play(state.name);
-        anim.Update(transition.FromTransitionStart);
+        anim.Update(transition.FromTransitionStart-dt);
+        
+        skin.BakeMesh(mesh, true);
         for (var i = 0; i < frames; i++)
         {
             anim.Update(dt);
-            skin.BakeMesh(mesh);
+            skin.BakeMesh(mesh,true);
 
             infoList.AddRange(Enumerable.Range(0, vCount)
                 .Select(idx => new VertInfo()
                 {
-                    position = mesh.vertices[idx],
-                    normal = mesh.normals[idx],
-                    tangent = mesh.tangents[idx]
+                    position = mesh.vertices[idx] * skin.transform.localScale.x,
+                    normal = mesh.normals[idx] * skin.transform.localScale.y,
+                    tangent = mesh.tangents[idx] * skin.transform.localScale.z
                 })
             );
         }

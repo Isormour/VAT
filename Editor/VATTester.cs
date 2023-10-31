@@ -7,6 +7,7 @@ public class VATTester : EditorWindow
     MaterialPropertyBlock RendererProperties;
     float animTime = 0;
     double LastTime = 0;
+    float TimeMult = 1;
 
     [MenuItem("DB/VATTester")]
     public static void CreateWindow()
@@ -21,6 +22,7 @@ public class VATTester : EditorWindow
     private void OnGUI()
     {
         ModelRenderer = (MeshRenderer)EditorGUILayout.ObjectField("ModelRenderer", ModelRenderer, typeof(MeshRenderer),true);
+        TimeMult = EditorGUILayout.FloatField("Speed", TimeMult);
         if (ModelRenderer != null)
         {
             if (GUILayout.Button("Toggle Anim"))
@@ -43,7 +45,7 @@ public class VATTester : EditorWindow
     {
         double timeDelta = EditorApplication.timeSinceStartup - LastTime;
         LastTime = EditorApplication.timeSinceStartup;
-        animTime += (float)timeDelta;
+        animTime += (float)timeDelta* TimeMult;
 
         if (animTime > 1)
         {

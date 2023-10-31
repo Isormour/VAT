@@ -10,5 +10,5 @@ public class TransitionVAT : ScriptableObject
     public float Length;
     public float ToTransitionStart;
     public float FromTransitionStart;
-    public float ToTransitionTime {get { return ToTransitionStart+(Length*To.VAT.Duration); }}
+    public float ToTransitionTime {get { return ToTransitionStart+Length; }}
 }
