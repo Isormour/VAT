@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-public class VATTester : EditorWindow
+public class VATTester : EditorWindow 
 {
     public MeshRenderer ModelRenderer;
     MaterialPropertyBlock RendererProperties;

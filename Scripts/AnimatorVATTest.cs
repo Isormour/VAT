@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class AnimatorVATTest : MonoBehaviour
+public class AnimatorVATTest : MonoBehaviour,IAnimatorVat
 {
     [SerializeField] MeshRenderer rend;
     [SerializeField] AnimatorControllerVAT animatorController;
@@ -24,5 +24,10 @@ public class AnimatorVATTest : MonoBehaviour
         {
             Vat.Play("AttackState");
         }
+    }
+
+    public AnimatorVAT GetAnimatorVat()
+    {
+        return this.Vat;
     }
 }

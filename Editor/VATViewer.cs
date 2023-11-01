@@ -29,7 +29,7 @@ public class VATViewer : EditorWindow
             return;
         }
         GameObject obj = Selection.activeGameObject;
-        AnimatorVATTest animatorVatTest = obj.GetComponent<AnimatorVATTest>();
+        IAnimatorVat animatorVatTest = obj.GetComponent<IAnimatorVat>();
         if (animatorVatTest == null)
         {
             GUI.contentColor = Color.red;
@@ -44,15 +44,16 @@ public class VATViewer : EditorWindow
             GUI.contentColor = Color.black;
             return;
         }
-        GUILayout.Label("Currnet state " + animatorVatTest.Vat.currentState.StateName);
-        GUILayout.Label("Currnet time " + animatorVatTest.Vat.animationTime);
-        GUILayout.Label("Is InTransition " + animatorVatTest.Vat.inTransition);
-        GUILayout.Label("Currnet transition " + animatorVatTest.Vat.currentTransition == null? animatorVatTest.Vat.currentTransition.name : "null");
-        if(animatorVatTest.Vat.currentTransition !=null)
+        AnimatorVAT animVat = animatorVatTest.GetAnimatorVat();
+        GUILayout.Label("Currnet state " + animVat.currentState.StateName);
+        GUILayout.Label("Currnet time " + animVat.animationTime);
+        GUILayout.Label("Is InTransition " + animVat.inTransition);
+        GUILayout.Label("Currnet transition " + animVat.currentTransition == null? animVat.currentTransition.name : "null");
+        if(animVat.currentTransition !=null)
         {
-            GUILayout.Label("Transition in start = " + animatorVatTest.Vat.currentTransition.FromTransitionStart);
-            GUILayout.Label("Transition length = " + animatorVatTest.Vat.currentTransition.Length);
-            GUILayout.Label("Transition out start = " + animatorVatTest.Vat.currentTransition.ToTransitionTime);
+            GUILayout.Label("Transition in start = " + animVat.currentTransition.FromTransitionStart);
+            GUILayout.Label("Transition length = " + animVat.currentTransition.Length);
+            GUILayout.Label("Transition out start = " + animVat.currentTransition.ToTransitionTime);
         }
         
     }
