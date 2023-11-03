@@ -20,14 +20,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: AnimatedMatBasic
-  m_Shader: {fileID: -6465566751694194690, guid: 7b872ad5763522b4a93094b7ed8d4307, type: 3}
+  m_Name: AnimatedMat
+  m_Shader: {fileID: -6465566751694194690, guid: 276b04b1415353d4390fd6783e43d765, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -37,7 +37,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - Texture2D_2658EC8C:
-        m_Texture: {fileID: 2800000, guid: d11b9064b7ef5de41ad4a3b46f555c77, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_37E9309F:
@@ -45,7 +45,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_83948D89:
-        m_Texture: {fileID: 2800000, guid: 5ff1d53b1f1b0e1449f9d590dc05fe2f, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_A0880596:
@@ -64,22 +64,6 @@ Material:
         m_Texture: {fileID: 2800000, guid: f61f5a70d23c3b64dafda8b476a559b4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Texture2DAsset_e62ca93403fb4d5a8ba271781db001a3_Out_0_Texture2D:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _VATAnimationTexture:
-        m_Texture: {fileID: 2800000, guid: 418d96ea4a8065a428d523dfeeac708c, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _VATNormalTexture:
-        m_Texture: {fileID: 2800000, guid: 032d6e9cb95ef8942b13f52f4e83ed32, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _VATTangentTexture:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -94,11 +78,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - Vector1_C958745B: 0.15
-    - _AnimationTime: -0.6
+    - Vector1_C958745B: 1
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _VATAnimationTime: 0.88
-    - _VATDuration: 1
     m_Colors: []
   m_BuildTextureStacks: []

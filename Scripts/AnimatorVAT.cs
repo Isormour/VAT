@@ -9,14 +9,15 @@ public class AnimatorVAT
     public float animationTime { private set; get; } = 0;
     public int eventIndex { private set; get; } = 0;
 
-    AnimatorControllerVAT animatorController;
+    public AnimatorControllerVAT animatorController { private set; get; }
+
     MaterialPropertyBlock materialBlock;
 
     public MeshRenderer renderer;
     public float SpeedMultiplier = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
-    
+
     public AnimatorVAT(MaterialPropertyBlock matBlock, MeshRenderer renderer, AnimatorControllerVAT animatorController)
     {
         materialBlock = matBlock;
@@ -61,11 +62,14 @@ public class AnimatorVAT
     }
     public void Play(string name)
     {
+
+        if (currentTransition != null) return;
         // get state
         VATState nextState = GetState(name);
-        if (nextState == null) return;
+        if (nextState == null || currentState == nextState) return;
 
         TransitionVAT transition = GetTransition(nextState);
+        
 
         if (transition != null && !inTransition)
         {
@@ -103,17 +107,18 @@ public class AnimatorVAT
                 float transitionTime = animationTime;
                 if (transitionTime >= currentTransition.Length)
                 {
-
-                    Play(currentTransition.To.StateName);
-                    animationTime = currentTransition.ToTransitionTime;
+                    string nextState = currentTransition.To.StateName;
+                    float nextAnimTime = currentTransition.ToTransitionTime;
                     currentTransition = null;
+                    Play(nextState);
+                    animationTime = nextAnimTime;
                     inTransition = false;
                 }
             }
             else
             {
                 float transitionTime = animationTime - currentTransition.FromTransitionStart;
-                if (Mathf.Abs(transitionTime)<0.01f)
+                if (Mathf.Abs(transitionTime) < 0.01f)
                 {
                     inTransition = true;
                     SetVAT(currentTransition.Transition);

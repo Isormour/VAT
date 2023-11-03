@@ -33,6 +33,7 @@ public class VATTester : EditorWindow
     }
     private void Update()
     {
+        Repaint();
         if (ModelRenderer != null)
         {
             UpdateTime();
