@@ -27,7 +27,7 @@ public class AnimatorVAT
         SetState(animatorController.States[0]);
         renderer.SetPropertyBlock(materialBlock);
     }
-    VATState GetState(string name)
+   public VATState GetState(string name)
     {
         for (int i = 0; i < this.animatorController.States.Length; i++)
         {
