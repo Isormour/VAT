@@ -1,7 +1,10 @@
 using UnityEngine;
+using static AnimatorVAT;
 
 public class AnimatorVAT
 {
+    public delegate void StateChange(VATState newState);
+    public event StateChange OnStateChange;
     public bool inTransition { private set; get; } = false;
     public AnimationVAT CurrentVAT { private set; get; }
     public VATState currentState { private set; get; }
@@ -41,12 +44,12 @@ public class AnimatorVAT
     }
     void SetState(VATState state)
     {
+        OnStateChange?.Invoke(state);
         currentState = state;
         SetVAT(currentState.VAT);
     }
     void SetVAT(AnimationVAT VAT)
     {
-
         animationTime = 0;
         eventIndex = 0;
         materialBlock.SetTexture("_VATAnimationTexture", VAT.VATTexture);
