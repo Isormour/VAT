@@ -1,5 +1,4 @@
 using UnityEngine;
-using static AnimatorVAT;
 
 public class AnimatorVAT
 {
@@ -26,7 +25,7 @@ public class AnimatorVAT
         materialBlock = matBlock;
         this.renderer = renderer;
         Bounds temp = this.renderer.localBounds;
-        temp.extents  = 2*this.renderer.localBounds.extents;
+        temp.extents  = 3*this.renderer.localBounds.extents;
         this.renderer.localBounds = temp;
         this.animatorController = animatorController;
 
