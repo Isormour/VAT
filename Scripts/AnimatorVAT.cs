@@ -25,6 +25,9 @@ public class AnimatorVAT
     {
         materialBlock = matBlock;
         this.renderer = renderer;
+        Bounds temp = this.renderer.localBounds;
+        temp.extents  = 2*this.renderer.localBounds.extents;
+        this.renderer.localBounds = temp;
         this.animatorController = animatorController;
 
         SetState(animatorController.States[0]);
