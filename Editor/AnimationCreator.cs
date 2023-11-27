@@ -197,6 +197,7 @@ public class AnimationCreator : EditorWindow
             }
         }
         stateMachine.defaultState = defaultState;
+        animatorController.BoundsScale = skin.transform.localScale.x;
         AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
 
     }

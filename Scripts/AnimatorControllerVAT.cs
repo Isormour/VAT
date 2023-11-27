@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class AnimatorControllerVAT : ScriptableObject
 {
-   public VATState[] States;
+    public VATState[] States;
+    public float BoundsScale =1;
     public VATState GetState(string stateName)
     {
         VATState state = null;
