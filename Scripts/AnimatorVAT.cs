@@ -29,6 +29,10 @@ public class AnimatorVAT
         this.renderer.localBounds = temp;
         this.animatorController = animatorController;
 
+        materialBlock.SetTexture("_VATAnimationTexture", animatorController.VATPosition);
+        materialBlock.SetTexture("_VATNormalTexture", animatorController.VATNormal);
+        materialBlock.SetTexture("_VATTangentTexture", animatorController.VATTangent);
+
         SetState(animatorController.States[0]);
         renderer.SetPropertyBlock(materialBlock);
     }
@@ -54,11 +58,7 @@ public class AnimatorVAT
     {
         animationTime = 0;
         eventIndex = 0;
-        materialBlock.SetTexture("_VATAnimationTexture", animatorController.VATPosition);
-        materialBlock.SetTexture("_VATNormalTexture", animatorController.VATNormal);
-        materialBlock.SetTexture("_VATTangentTexture", animatorController.VATTangent);
         CurrentVAT = VAT;
-        renderer.SetPropertyBlock(materialBlock);
     }
     public void Update(float deltaTime)
     {
@@ -130,13 +130,14 @@ public class AnimatorVAT
                 }
             }
         }
-        UpdateCurrentState(deltaTime);
+        UpdateCurrentState();
     }
-    void UpdateCurrentState(float deltaTime)
+    void UpdateCurrentState()
     {
         //TODO move 0.025f TimeDelta 
-        float animEnd = currentState.VAT.StartTime + currentState.VAT.Frames * 0.025f;
-        if (!inTransition && currentState.VAT.IsLooped && animationTime >= animEnd)
+        float animEnd = currentState.VAT.EndTime;
+        float currentTime = currentState.VAT.StartTime + animationTime;
+        if (!inTransition && currentState.VAT.IsLooped && currentTime >= animEnd)
         {
             animationTime = 0;
             eventIndex = 0;

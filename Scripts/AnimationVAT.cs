@@ -10,7 +10,7 @@ public class AnimationVAT : ScriptableObject
     public bool IsLooped = false;
     public float AnimationSpeed =1;
     public int Frames;
-    public float EndTime { get { return StartTime + (Frames * AnimDelta); } }
+    public float EndTime;
     public float Duration { get { return Frames * AnimDelta; } }
     [System.Serializable]
     public struct VATEvent {

@@ -220,6 +220,7 @@ public class AnimationCreator : EditorWindow
         // gather vertex positions
 
         float animStart = 0;
+        int totalFrames = 0;
         for (int i = 0; i < states.Length; i++)
         {
             AnimatorState state = states[i].state;
@@ -227,13 +228,16 @@ public class AnimationCreator : EditorWindow
             totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
             StateToVat[state].StartTime = animStart;
             animStart += StateToVat[state].Duration;
+            totalFrames += StateToVat[state].Frames;
             for (int j = 0; j < StateToTransition[state].Length; j++)
             {
                 state.AddTransition(StateToTransition[state][j]);
                 totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
                 state.RemoveTransition(StateToTransition[state][j]);
-                animatorController.States[i].Transitions[j].Transition.StartTime = startTime;
-                animStart += StateToVat[state].Duration;
+                AnimationVAT transitionObject = animatorController.States[i].Transitions[j].Transition;
+                transitionObject.StartTime = animStart;
+                animStart += transitionObject.Duration;
+                totalFrames += transitionObject.Frames;
             }
         }
         float totalTime = animStart;
@@ -241,10 +245,15 @@ public class AnimationCreator : EditorWindow
         {
             AnimatorState state = states[i].state;
             StateToVat[state].StartTime = StateToVat[state].StartTime/totalTime;
+            StateToVat[state].EndTime = StateToVat[state].StartTime + (StateToVat[state].Frames /(float) totalFrames);
             for (int j = 0; j < StateToTransition[state].Length; j++)
             {
-                float temp = animatorController.States[i].Transitions[j].Transition.StartTime;
-                animatorController.States[i].Transitions[j].Transition.StartTime = temp / totalTime;
+                float tempStartTime = animatorController.States[i].Transitions[j].Transition.StartTime;
+                tempStartTime = startTime / totalTime;
+                AnimationVAT transitionObject = animatorController.States[i].Transitions[j].Transition;
+                transitionObject.StartTime= tempStartTime;
+                int frames = transitionObject.Frames;
+                transitionObject.EndTime = tempStartTime + (frames / (float)totalFrames);
             }
         }
 
