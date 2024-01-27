@@ -1,16 +1,19 @@
+using Codice.Client.BaseCommands;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditorInternal;
 using UnityEngine;
-
+using static UnityEditor.VersionControl.Asset;
+using static UnityEngine.Random;
+using AnimatorController = UnityEditor.Animations.AnimatorController;
 
 public class AnimationCreator : EditorWindow
 {
     public ComputeShader infoTexGen;
-    public ComputeShader infoTransitionGen;
     public Material animBaseMaterial;
     public AnimationClip[] clips;
     public GameObject model;
@@ -22,7 +25,7 @@ public class AnimationCreator : EditorWindow
         public Vector3 tangent;
     }
 
-    [MenuItem("DB/VATBaker")]
+    [MenuItem("DB/VAT/VATBaker")]
 
     public static void CreateWindow()
     {
@@ -37,7 +40,6 @@ public class AnimationCreator : EditorWindow
     void DrawProperties()
     {
         infoTexGen = (ComputeShader)EditorGUILayout.ObjectField("infoTexGen", infoTexGen, typeof(ComputeShader), false);
-        infoTransitionGen = (ComputeShader)EditorGUILayout.ObjectField("infoTransitionGen", infoTransitionGen, typeof(ComputeShader), false);
         animBaseMaterial = (Material)EditorGUILayout.ObjectField("playShader", animBaseMaterial, typeof(Material), false);
         model = (GameObject)EditorGUILayout.ObjectField("model", model, typeof(GameObject), true);
     }
@@ -47,10 +49,7 @@ public class AnimationCreator : EditorWindow
         {
             infoTexGen = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.db.VAT/Graphics/MeshInfoTextureGen.compute");
         }
-        if (infoTransitionGen == null)
-        {
-            infoTransitionGen = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.db.VAT/Graphics/InfoTransitionGen.compute");
-        }
+
         if (animBaseMaterial == null)
         {
             animBaseMaterial = AssetDatabase.LoadAssetAtPath<Material>("Packages/com.db.VAT/Graphics/AnimatedMatBasic.mat");
@@ -60,7 +59,6 @@ public class AnimationCreator : EditorWindow
     {
         if (animBaseMaterial == null) return;
         if (infoTexGen == null) return;
-        if (infoTransitionGen == null) return;
         if (model == null) return;
 
         if (GUILayout.Button("Bake Clips"))
@@ -98,23 +96,37 @@ public class AnimationCreator : EditorWindow
         if (!AssetDatabase.IsValidFolder(subFolderPath))
             AssetDatabase.CreateFolder(folderPath, subFolder);
 
-        foreach (var clip in clips)
-        {
-            int frames = Mathf.NextPowerOfTwo((int)(clip.length / AnimDelta));
-            int dt = (int)(clip.length / frames);
+        AnimatorControllerVAT animatorController = CreateInstance<AnimatorControllerVAT>();
+        animatorController.States = new VATState[clips.Length];
 
-            List<VertInfo> verts = SampleAnimation(clip, skin, mesh, vCount, frames, dt, model.gameObject);
-            RenderTexture[] textures = CreateTextures(texWidth, frames, model.name, clip.name);
-            GenerateVATTextures(textures[0], textures[1], textures[2], verts, this.infoTexGen, vCount, frames);
-            Texture2D[] VATTextures = CreateVATTextureAssets(textures[0], textures[1], textures[2], subFolder, clip.name, clip.length, clip.events, clip.isLooping);
-            AnimationVAT animationVat = CreateVATObject(subFolder, frames * dt, clip.events, clip.isLooping);
-            animationVat.VATTexture = VATTextures[0];
-            animationVat.VATNormal = VATTextures[1];
-            animationVat.VATTangent = VATTextures[2];
+        List<VertInfo> totalVerts = new List<VertInfo>();
+        float startTime = 0;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            int frames = Mathf.NextPowerOfTwo((int)(clips[i].length / AnimDelta));
+            int dt = (int)(clips[i].length / frames);
+            List<VertInfo> verts = SampleAnimation(clips[i], skin, mesh, vCount, frames, dt, model.gameObject);
+            AnimationVAT animationVAT = CreateVATObject(subFolder, clips[i].name, clips[i].length, clips[i].events, clips[i].isLooping);
+            animationVAT.StartTime = startTime;
+            startTime += animationVAT.Duration;
+            animatorController.States[i] = new VATState(clips[i].name, animationVAT, 0);
+            totalVerts.AddRange(verts);
         }
+        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
+        Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVerts);
+        animatorController.VATPosition = VATTextures[0];
+        animatorController.VATNormal = VATTextures[1];
+        animatorController.VATTangent = VATTextures[2];
+
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+
+        animBaseMaterial.SetTexture("_VATAnimationTexture", VATTextures[0]);
+        animBaseMaterial.SetTexture("_VATNormalTexture", VATTextures[1]);
+        animBaseMaterial.SetTexture("_VATTangentTexture", VATTextures[2]);
     }
+
     void BakeForAnimator()
     {
         if (!model.activeInHierarchy) model.SetActive(true);
@@ -140,8 +152,8 @@ public class AnimationCreator : EditorWindow
         if (!AssetDatabase.IsValidFolder(subFolderPath))
             AssetDatabase.CreateFolder(folderPath, subFolder);
 
-        var controller = animator.runtimeAnimatorController;
-        var stateMachine = ((UnityEditor.Animations.AnimatorController)controller).layers[0].stateMachine;
+        RuntimeAnimatorController controller = animator.runtimeAnimatorController;
+        AnimatorStateMachine stateMachine = ((AnimatorController)controller).layers[0].stateMachine;
         ChildAnimatorState[] states = stateMachine.states;
         Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition = new Dictionary<AnimatorState, AnimatorStateTransition[]>();
         Dictionary<AnimatorState, AnimationVAT> StateToVat = new Dictionary<AnimatorState, AnimationVAT>();
@@ -161,35 +173,23 @@ public class AnimationCreator : EditorWindow
                 states[i].state.RemoveTransition(states[i].state.transitions[j]);
             }
         }
-
-        foreach (var mState in stateMachine.states)
+        float startTime = 0;
+        for (int i = 0; i < stateMachine.states.Length; i++)
         {
-            AnimationClip clip = (AnimationClip)mState.state.motion;
-            StateToVat.Add(mState.state, CreateVATObject(subFolderPath, clip.length, clip.events, clip.isLooping));
+            AnimatorState state = stateMachine.states[i].state;
+            AnimationClip clip = (AnimationClip)state.motion;
+            StateToVat.Add(state, CreateVATObject(subFolderPath, clip.name, clip.length, clip.events, clip.isLooping));
         }
-
-        //Apply old transitions
-        for (int i = 0; i < states.Length; i++)
-        {
-            for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
-            {
-                states[i].state.AddTransition(StateToTransition[states[i].state][j]);
-            }
-        }
-
         AnimatorControllerVAT animatorController = CreateInstance<AnimatorControllerVAT>();
         animatorController.States = new VATState[states.Length];
 
         for (int i = 0; i < animatorController.States.Length; i++)
         {
-            animatorController.States[i] = new VATState();
-            animatorController.States[i].StateName = states[i].state.name;
-            animatorController.States[i].VAT = StateToVat[states[i].state];
             int transitionCount = StateToVATTransition[states[i].state].Length;
-            animatorController.States[i].Transitions = new TransitionVAT[transitionCount];
+            animatorController.States[i] = new VATState(states[i].state.name, StateToVat[states[i].state], transitionCount);
         }
         AnimatorState defaultState = stateMachine.defaultState;
-        //create vat textures for transitions
+
         for (int i = 0; i < states.Length; i++)
         {
             for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
@@ -200,32 +200,86 @@ public class AnimationCreator : EditorWindow
                 TransitionVAT transitionVat = CreateInstance<TransitionVAT>();
                 transitionVat.From = animatorController.States[i];
                 transitionVat.To = animatorController.GetState(animTransition.destinationState.name);
-                transitionVat.FromTransitionStart = states[i].state.motion.averageDuration * animTransition.exitTime;
+                transitionVat.FromTransitionStart = states [i].state.motion.averageDuration * animTransition.exitTime;
                 transitionVat.Length = animTransition.duration;
                 transitionVat.ToTransitionStart = animTransition.destinationState.motion.averageDuration * animTransition.offset;
                 string transitionName = states[i].state.name + "-" + animTransition.destinationState.name;
-                CreateVATObject(subFolderPath, transitionVat.Length, new AnimationEvent[0], false);
-                string assetName = "VAT_Transition_" + transitionName;
+
+                string transitionAssetName = "VAT_Transition_" + transitionName;
+                string transitionAnimationName = transitionVat.From.StateName + "_TO_" + transitionVat.To.StateName;
                 animatorController.States[i].Transitions[j] = transitionVat;
-                AssetDatabase.CreateAsset(transitionVat, Path.Combine(subFolderPath, assetName + ".asset"));
+                transitionVat.Transition = CreateVATObject(subFolderPath, transitionAnimationName, transitionVat.Length, new AnimationEvent[0], false);
+                AssetDatabase.CreateAsset(transitionVat, Path.Combine(subFolderPath, transitionAssetName + ".asset"));
             }
         }
         stateMachine.defaultState = defaultState;
         animatorController.BoundsScale = skin.transform.localScale.x;
         AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
 
+        List<VertInfo> totalVertexData = new List<VertInfo>();
+        // gather vertex positions
+
+        float animStart = 0;
+        for (int i = 0; i < states.Length; i++)
+        {
+            AnimatorState state = states[i].state;
+            stateMachine.defaultState = state;
+            totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
+            StateToVat[state].StartTime = animStart;
+            animStart += StateToVat[state].Duration;
+            for (int j = 0; j < StateToTransition[state].Length; j++)
+            {
+                state.AddTransition(StateToTransition[state][j]);
+                totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
+                state.RemoveTransition(StateToTransition[state][j]);
+                animatorController.States[i].Transitions[j].Transition.StartTime = startTime;
+                animStart += StateToVat[state].Duration;
+            }
+        }
+        float totalTime = animStart;
+        for (int i = 0; i < states.Length; i++)
+        {
+            AnimatorState state = states[i].state;
+            StateToVat[state].StartTime = StateToVat[state].StartTime/totalTime;
+            for (int j = 0; j < StateToTransition[state].Length; j++)
+            {
+                float temp = animatorController.States[i].Transitions[j].Transition.StartTime;
+                animatorController.States[i].Transitions[j].Transition.StartTime = temp / totalTime;
+            }
+        }
+
+
+        stateMachine.defaultState = defaultState;
+        // apply old transitions
+        for (int i = 0; i < states.Length; i++)
+        {
+            for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
+            {
+                states[i].state.AddTransition(StateToTransition[states[i].state][j]);
+            }
+        }
+
+        Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVertexData);
+        animatorController.VATPosition = VATTextures[0];
+        animatorController.VATNormal = VATTextures[1];
+        animatorController.VATTangent = VATTextures[2];
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
     }
-    public List<VertInfo> GetClipData(AnimationClip clip, SkinnedMeshRenderer skin, Mesh mesh, int vCount, string subFolderPath, string modelName, GameObject modelObject, ComputeShader shader)
+    public List<VertInfo> GetClipData(Animator anim,AnimatorState state, SkinnedMeshRenderer skin, Mesh mesh, int vCount)
+    {
+        List<VertInfo> infoList = SampleAnimator(anim, state, skin, mesh, vCount);
+        return infoList;
+    }
+
+    public List<VertInfo> GetClipData(AnimationClip clip, SkinnedMeshRenderer skin, Mesh mesh, int vCount, GameObject modelObject)
     {
         int frames = Mathf.NextPowerOfTwo((int)(clip.length / AnimDelta));
         int dt = (int)(clip.length / frames);
 
         List<VertInfo> infoList = SampleAnimation(clip, skin, mesh, frames, dt, vCount, modelObject);
         return infoList;
-        // RenderTexture[] rts = CreateTextures(texWidth, frames, modelName, clip.name);
-
-        // GenerateVATTextures(rts[0], rts[1], rts[2], infoList, shader, vCount, frames);
-        // CreateVATTextureAssets(rts[0], rts[1], rts[2], subFolderPath, clip.name, clip.length, clip.events, clip.isLooping);
     }
 
     private List<VertInfo> SampleAnimation(AnimationClip clip, SkinnedMeshRenderer skin, Mesh mesh, int frames, float deltaTime, int vCount, GameObject modelObject)
@@ -244,38 +298,18 @@ public class AnimationCreator : EditorWindow
                     tangent = mesh.tangents[idx] * skin.transform.localScale.z
                 })
             );
-            //add to global texture
         }
         return infoList;
     }
-
-    public void CreateVATTransitionTexture(Animator anim, AnimatorState state, SkinnedMeshRenderer skin, Mesh mesh, int vCount, string subFolderPath, string transitionName, TransitionVAT transition)
-    {
-        AnimationClip clip = (AnimationClip)state.motion;
-        Debug.Log("transition leng1 = " + transition.Length);
-        var frames = Mathf.NextPowerOfTwo((int)(transition.Length / AnimDelta));
-        var dt = transition.Length / frames;
-
-        transition.Length = frames * dt;
-
-        Debug.Log("transition leng2 = " + transition.Length);
-        Debug.Log("transition ToStart = " + transition.ToTransitionStart);
-        List<VertInfo> infoList = SampleAnimator(anim, state, skin, mesh, vCount);
-
-
-        //RenderTexture[] rts = CreateTextures(texWidth, frames, "VAT_TransitionTexture_", transitionName);
-        //GenerateVATTextures(rts[0], rts[1], rts[2], infoList, shader, vCount, frames);
-        //transition.Transition = CreateVATAssets(rts[0], rts[1], rts[2], subFolderPath, transitionName,transition.Length,new AnimationEvent[0], false);
-
-    }
     public List<VertInfo> SampleAnimator(Animator anim, AnimatorState state, SkinnedMeshRenderer skin, Mesh mesh, int vCount)
     {
+       
         AnimationClip clip = (AnimationClip)state.motion;
         var frames = Mathf.NextPowerOfTwo((int)(clip.length / AnimDelta));
         var dt = clip.length / frames;
         var infoList = new List<VertInfo>();
         anim.Play(state.name);
-
+        Debug.Log("Play state " + state.name);
         for (var i = 0; i < frames; i++)
         {
             anim.Update(dt);
@@ -290,17 +324,78 @@ public class AnimationCreator : EditorWindow
             );
         }
         return infoList;
-
     }
 
-    RenderTexture[] CreateTextures(int texWidth, int frames, string modelName, string animName)
+    // TODO: get vert info for transitions
+    public void CreateVATTransitionTexture(Animator anim, AnimatorState state, int texWidth, SkinnedMeshRenderer skin, Mesh mesh, int vCount, string subFolderPath, string transitionName, ComputeShader shader, TransitionVAT transition)
+    {
+        AnimationClip clip = (AnimationClip)state.motion;
+        Debug.Log("transition leng1 = " + transition.Length);
+        var frames = Mathf.NextPowerOfTwo((int)(transition.Length / AnimDelta));
+        var dt = transition.Length / frames;
+
+        transition.Length = frames * dt;
+
+        Debug.Log("transition leng2 = " + transition.Length);
+        Debug.Log("transition ToStart = " + transition.ToTransitionStart);
+
+        var infoList = new List<VertInfo>();
+        anim.Rebind();
+        anim.Play(state.name);
+        anim.Update(transition.FromTransitionStart - dt);
+
+        skin.BakeMesh(mesh, true);
+        for (var i = 0; i < frames; i++)
+        {
+            anim.Update(dt);
+            skin.BakeMesh(mesh, true);
+
+            infoList.AddRange(Enumerable.Range(0, vCount)
+                .Select(idx => new VertInfo()
+                {
+                    position = mesh.vertices[idx] * skin.transform.localScale.x,
+                    normal = mesh.normals[idx] * skin.transform.localScale.y,
+                    tangent = mesh.tangents[idx] * skin.transform.localScale.z
+                })
+            );
+        }
+    }
+    Texture2D[] CreateVatTextures(int texWidth, AnimatorControllerVAT controller, int vCount, string subfolder, List<VertInfo> totalVerts)
+    {
+        int AllAnimations = controller.States.Length;
+        for (int i = 0; i < controller.States.Length; i++)
+        {
+            AllAnimations += controller.States[i].Transitions.Length;
+        }
+        AnimationVAT[] animations = new AnimationVAT[AllAnimations];
+        int AnimationIndex = 0;
+
+        //set animation array
+        for (int i = 0; i < controller.States.Length; i++)
+        {
+            animations[AnimationIndex] = controller.States[i].VAT;
+            AnimationIndex++;
+            for (int j = 0; j < controller.States[i].Transitions.Length; j++)
+            {
+                animations[AnimationIndex] = controller.States[i].Transitions[j].Transition;
+                AnimationIndex++;
+            }
+        }
+
+        int frames = totalVerts.Count / vCount;
+        RenderTexture[] textures = CreateTextures(texWidth, frames, model.name);
+        GenerateVATTextures(textures, totalVerts, this.infoTexGen,vCount, frames);
+        Texture2D[] VATTextures = CreateTextureAssets(textures, subfolder);
+        return VATTextures;
+    }
+    RenderTexture[] CreateTextures(int texWidth, int frames, string modelName)
     {
         var pRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
-        pRt.name = string.Format("{0}.{1}.posTex", modelName, animName);
+        pRt.name = string.Format("{0}_posTex", modelName);
         var nRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
-        nRt.name = string.Format("{0}.{1}.normTex", modelName, animName);
+        nRt.name = string.Format("{0}_normTex", modelName);
         var tRt = new RenderTexture(texWidth, frames, 0, RenderTextureFormat.ARGBHalf);
-        tRt.name = string.Format("{0}.{1}.tangentTex", modelName, animName);
+        tRt.name = string.Format("{0}_tangentTex", modelName);
 
         foreach (var rt in new[] { pRt, nRt, tRt })
         {
@@ -311,7 +406,7 @@ public class AnimationCreator : EditorWindow
         }
         return new RenderTexture[] { pRt, nRt, tRt };
     }
-    void GenerateVATTextures(RenderTexture positionRT, RenderTexture normalRT, RenderTexture tangentRT, List<VertInfo> infoList, ComputeShader shader, int vCount, int frames)
+    void GenerateVATTextures(RenderTexture[] textures, List<VertInfo> infoList, ComputeShader shader, int vCount, int frames)
     {
         var buffer = new ComputeBuffer(infoList.Count, System.Runtime.InteropServices.Marshal.SizeOf(typeof(VertInfo)));
         buffer.SetData(infoList.ToArray());
@@ -322,50 +417,51 @@ public class AnimationCreator : EditorWindow
 
         shader.SetInt("VertCount", vCount);
         shader.SetBuffer(kernel, "Info", buffer);
-        shader.SetTexture(kernel, "OutPosition", positionRT);
-        shader.SetTexture(kernel, "OutNormal", normalRT);
-        shader.SetTexture(kernel, "OutTangent", tangentRT);
+        shader.SetTexture(kernel, "OutPosition", textures[0]);
+        shader.SetTexture(kernel, "OutNormal", textures[1]);
+        shader.SetTexture(kernel, "OutTangent", textures[2]);
         shader.Dispatch(kernel, vCount / (int)x + 1, frames / (int)y + 1, 1);
 
         buffer.Release();
     }
-    Texture2D[] CreateVATTextureAssets(RenderTexture positionRT, RenderTexture normalRT, RenderTexture tangentRT, string subFolderPath, string name, float duration, AnimationEvent[] events, bool isLooping)
+    Texture2D[] CreateTextureAssets(RenderTexture[] textures, string subFolderPath)
     {
-        var posTex = RenderTextureToTexture2D.Convert(positionRT);
-        var normTex = RenderTextureToTexture2D.Convert(normalRT);
-        var tanTex = RenderTextureToTexture2D.Convert(tangentRT);
+        var posTex = RenderTextureToTexture2D.Convert(textures[0]);
+        var normTex = RenderTextureToTexture2D.Convert(textures[1]);
+        var tanTex = RenderTextureToTexture2D.Convert(textures[2]);
 
-        Graphics.CopyTexture(positionRT, posTex);
-        Graphics.CopyTexture(normalRT, normTex);
-        Graphics.CopyTexture(tangentRT, tanTex);
+        Graphics.CopyTexture(textures[0], posTex);
+        Graphics.CopyTexture(textures[1], normTex);
+        Graphics.CopyTexture(textures[2], tanTex);
 
-        AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, positionRT.name + ".asset"));
-        AssetDatabase.CreateAsset(normTex, Path.Combine(subFolderPath, normalRT.name + ".asset"));
-        AssetDatabase.CreateAsset(tanTex, Path.Combine(subFolderPath, tangentRT.name + ".asset"));
+        AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, textures[0].name + ".asset"));
+        AssetDatabase.CreateAsset(normTex, Path.Combine(subFolderPath, textures[1].name + ".asset"));
+        AssetDatabase.CreateAsset(tanTex, Path.Combine(subFolderPath, textures[2].name + ".asset"));
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         return new Texture2D[] { posTex, normTex, tanTex };
     }
-    AnimationVAT CreateVATObject(string subFolderPath, float duration, AnimationEvent[] events, bool isLooping)
+    AnimationVAT CreateVATObject(string subFolderPath, string clipName, float length, AnimationEvent[] events, bool isLooping)
     {
         AnimationVAT VATObject = CreateInstance<AnimationVAT>();
-        VATObject.Duration = duration;
 
         AnimationVAT.VATEvent[] vatEvents = new AnimationVAT.VATEvent[events.Length];
         for (int i = 0; i < events.Length; i++)
         {
             AnimationVAT.VATEvent tempEvent = new AnimationVAT.VATEvent();
-            tempEvent.Time = events[i].time / duration;
+            tempEvent.Time = events[i].time / length;
             tempEvent.Name = events[i].functionName;
             vatEvents[i] = tempEvent;
         }
 
         VATObject.Events = vatEvents;
         VATObject.IsLooped = isLooping;
+        VATObject.AnimDelta = AnimDelta;
+        int frames = Mathf.NextPowerOfTwo((int)(length / AnimDelta));
+        VATObject.Frames = frames;
 
-
-        AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + name + ".asset"));
+        AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + clipName + ".asset"));
         return VATObject;
 
     }

@@ -7,6 +7,7 @@ public class TransitionVAT : ScriptableObject
     public VATState From;
     public VATState To;
     public AnimationVAT Transition;
+    public float FrameStart;
     public float Length;
     public float ToTransitionStart;
     public float FromTransitionStart;

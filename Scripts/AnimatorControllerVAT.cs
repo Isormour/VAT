@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class AnimatorControllerVAT : ScriptableObject
 {
+    public Texture2D VATPosition;
+    public Texture2D VATNormal;
+    public Texture2D VATTangent;
+
     public VATState[] States;
     public float BoundsScale =1;
     public VATState GetState(string stateName)

@@ -54,9 +54,9 @@ public class AnimatorVAT
     {
         animationTime = 0;
         eventIndex = 0;
-        materialBlock.SetTexture("_VATAnimationTexture", VAT.VATTexture);
-        materialBlock.SetTexture("_VATNormalTexture", VAT.VATNormal);
-        materialBlock.SetTexture("_VATTangentTexture", VAT.VATTangent);
+        materialBlock.SetTexture("_VATAnimationTexture", animatorController.VATPosition);
+        materialBlock.SetTexture("_VATNormalTexture", animatorController.VATNormal);
+        materialBlock.SetTexture("_VATTangentTexture", animatorController.VATTangent);
         CurrentVAT = VAT;
         renderer.SetPropertyBlock(materialBlock);
     }
@@ -134,12 +134,14 @@ public class AnimatorVAT
     }
     void UpdateCurrentState(float deltaTime)
     {
-        if (!inTransition && currentState.VAT.IsLooped && animationTime >= CurrentVAT.Duration)
+        //TODO move 0.025f TimeDelta 
+        float animEnd = currentState.VAT.StartTime + currentState.VAT.Frames * 0.025f;
+        if (!inTransition && currentState.VAT.IsLooped && animationTime >= animEnd)
         {
             animationTime = 0;
             eventIndex = 0;
         }
-        materialBlock.SetFloat("_VATAnimationTime", animationTime / CurrentVAT.Duration);
+        materialBlock.SetFloat("_VATAnimationTime", currentState.VAT.StartTime+animationTime);
         renderer.SetPropertyBlock(materialBlock);
     }
     void CheckAnimationEvents()
@@ -152,7 +154,7 @@ public class AnimatorVAT
         {
             return;
         }
-        if (currentState.VAT.Events[eventIndex].Time < animationTime * currentState.VAT.Duration)
+        if (currentState.VAT.Events[eventIndex].Time < currentState.VAT.StartTime + animationTime)
         {
             OnVATEvent?.Invoke(currentState.StateName, currentState.VAT.Events[eventIndex].Name);
             eventIndex++;
@@ -166,4 +168,10 @@ public class VATState
     public string StateName;
     public AnimationVAT VAT;
     public TransitionVAT[] Transitions;
+    public VATState(string stateName, AnimationVAT vAT, int transitionNum)
+    {
+        StateName = stateName;
+        VAT = vAT;
+        Transitions = new TransitionVAT[transitionNum];
+    }
 }

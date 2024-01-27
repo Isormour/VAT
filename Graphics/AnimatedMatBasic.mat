@@ -69,11 +69,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATAnimationTexture:
-        m_Texture: {fileID: 2800000, guid: 418d96ea4a8065a428d523dfeeac708c, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATNormalTexture:
-        m_Texture: {fileID: 2800000, guid: 032d6e9cb95ef8942b13f52f4e83ed32, type: 2}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATTangentTexture:
@@ -98,7 +98,7 @@ Material:
     - _AnimationTime: -0.6
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _VATAnimationTime: 0.88
+    - _VATAnimationTime: 1.11
     - _VATDuration: 1
     m_Colors: []
   m_BuildTextureStacks: []

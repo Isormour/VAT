@@ -9,7 +9,7 @@ public class VATTester : EditorWindow
     double LastTime = 0;
     float TimeMult = 1;
 
-    [MenuItem("DB/VATTester")]
+    [MenuItem("DB/VAT/VATTester")]
     public static void CreateWindow()
     {
         GetWindow<VATTester>("VATTester").InitWindow();

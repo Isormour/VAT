@@ -35,7 +35,7 @@ public class VATViewer : EditorWindow
     {
         Repaint();
     }
-    [MenuItem("DB/VATViewer")]
+    [MenuItem("DB/VAT/VATViewer")]
     public static void CreateWindow()
     {
         GetWindow<VATViewer>("VATViewer").InitWindow();
