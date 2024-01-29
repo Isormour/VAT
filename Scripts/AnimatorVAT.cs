@@ -8,7 +8,7 @@ public class AnimatorVAT
     public AnimationVAT CurrentVAT { private set; get; }
     public VATState currentState { private set; get; }
     public TransitionVAT currentTransition { private set; get; } = null;
-    public float animationTime { private set; get; } = 0;
+    public float textureTime { private set; get; } = 0;
     public int eventIndex { private set; get; } = 0;
 
     public AnimatorControllerVAT animatorController { private set; get; }
@@ -56,7 +56,7 @@ public class AnimatorVAT
     }
     void SetVAT(AnimationVAT VAT)
     {
-        animationTime = 0;
+        textureTime = 0;
         eventIndex = 0;
         CurrentVAT = VAT;
     }
@@ -103,30 +103,37 @@ public class AnimatorVAT
     void UpdateTime(float deltaTime)
     {
         float animationSpeed = currentState.VAT.AnimationSpeed;
-        animationTime += deltaTime * SpeedMultiplier * animationSpeed;
+        textureTime += deltaTime * SpeedMultiplier * animationSpeed;
 
         if (currentTransition != null)
         {
             if (inTransition)
             {
-                float transitionTime = animationTime;
-                if (transitionTime >= currentTransition.Length)
+                float TransitionEndTime = currentTransition.Transition.TextureLength;
+                //exit transition
+                if (textureTime >= TransitionEndTime)
                 {
                     string nextState = currentTransition.To.StateName;
-                    float nextAnimTime = currentTransition.ToTransitionTime;
+                    float nextAnimTime = currentTransition.Transition.TextureLength;
                     currentTransition = null;
                     Play(nextState);
-                    animationTime = nextAnimTime;
+                    textureTime = nextAnimTime;
                     inTransition = false;
                 }
             }
             else
             {
-                float transitionTime = animationTime - currentTransition.FromTransitionStart;
-                if (Mathf.Abs(transitionTime) < 0.01f)
+              
+                float transitionEnterTextureTime = currentTransition.Transition.TextureLength*currentTransition.ExitTime;
+                float trasitionWindow = currentState.VAT.TextureLength - transitionEnterTextureTime - textureTime;
+                //enter transition
+                
+                if (Mathf.Abs(trasitionWindow) < currentTransition.Transition.AnimDelta/2)
                 {
                     inTransition = true;
                     SetVAT(currentTransition.Transition);
+                    // dirty haxor, in some cases after setting new transition animation system uses last frame from previous anim on texture
+                    textureTime += 0.001f;
                 }
             }
         }
@@ -135,14 +142,21 @@ public class AnimatorVAT
     void UpdateCurrentState()
     {
         //TODO move 0.025f TimeDelta 
-        float animEnd = currentState.VAT.EndTime;
-        float currentTime = currentState.VAT.StartTime + animationTime;
+        float animEnd = currentState.VAT.TextureEndTime;
+        float currentTime = currentState.VAT.TextureStartTime + textureTime;
         if (!inTransition && currentState.VAT.IsLooped && currentTime >= animEnd)
         {
-            animationTime = 0;
+            textureTime = 0;
             eventIndex = 0;
         }
-        materialBlock.SetFloat("_VATAnimationTime", currentState.VAT.StartTime+animationTime);
+        if (!inTransition)
+        {
+            materialBlock.SetFloat("_VATAnimationTime", currentState.VAT.TextureStartTime + textureTime);
+        }
+        else
+        {
+            materialBlock.SetFloat("_VATAnimationTime", currentTransition.Transition.TextureStartTime + textureTime);
+        }
         renderer.SetPropertyBlock(materialBlock);
     }
     void CheckAnimationEvents()
@@ -155,7 +169,7 @@ public class AnimatorVAT
         {
             return;
         }
-        if (currentState.VAT.Events[eventIndex].Time < currentState.VAT.StartTime + animationTime)
+        if (currentState.VAT.Events[eventIndex].Time < currentState.VAT.TextureStartTime + textureTime)
         {
             OnVATEvent?.Invoke(currentState.StateName, currentState.VAT.Events[eventIndex].Name);
             eventIndex++;
