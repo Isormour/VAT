@@ -16,7 +16,7 @@ public class AnimatorVATIndirect : AnimatorVAT
     {
 
     }
-    protected override void ApplyPropertyBlock(MaterialPropertyBlock block)
+    protected override void ApplyPropertyBlock()
     {
         
     }

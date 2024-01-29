@@ -22,11 +22,11 @@ public class AnimatorVATTest : MonoBehaviour,IAnimatorVat
         Vat.Update(Time.deltaTime * TimeSpeedMult);
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            Vat.Play("RunningState");
+            Vat.Play("Run");
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
-            Vat.Play("AttackState");
+            Vat.Play("Attack");
         }
     }
 

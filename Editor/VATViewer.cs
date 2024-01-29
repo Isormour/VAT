@@ -35,7 +35,7 @@ public class VATViewer : EditorWindow
     {
         Repaint();
     }
-    [MenuItem("DB/VATViewer")]
+    [MenuItem("DB/VAT/VATViewer")]
     public static void CreateWindow()
     {
         GetWindow<VATViewer>("VATViewer").InitWindow();
@@ -59,7 +59,7 @@ public class VATViewer : EditorWindow
             return;
         }
 
-    
+
         if (!EditorApplication.isPlaying)
         {
             GUI.contentColor = Color.red;
@@ -70,7 +70,7 @@ public class VATViewer : EditorWindow
         AnimatorVAT animVat = animatorVatTest.GetAnimatorVat();
 
         DrawMainInfo(animVat);
-        
+
         GUILayout.BeginHorizontal();
         GUILayout.BeginVertical(); DrawLeftSection(animVat); GUILayout.EndVertical();
         GUILayout.BeginVertical(); DrawRightSection(animVat); GUILayout.EndVertical();
@@ -78,28 +78,33 @@ public class VATViewer : EditorWindow
     }
     void DrawMainInfo(AnimatorVAT animVat)
     {
-      
+
         GUILayout.Label("Currnet state " + animVat.currentState.StateName);
-        GUILayout.Label("Currnet time " + animVat.animationTime);
+        GUILayout.Label("Currnet time " + animVat.textureTime);
         GUILayout.Label("Is InTransition " + animVat.inTransition);
         GUILayout.Label("Currnet transition " + animVat.currentTransition == null ? animVat.currentTransition.name : "null");
-     
+
     }
     void DrawLeftSection(AnimatorVAT animVat)
     {
-        if (animVat.currentTransition != null)
-        {
-            GUILayout.Label("Transition in start = " + animVat.currentTransition.FromTransitionStart);
-            GUILayout.Label("Transition length = " + animVat.currentTransition.Length);
-            GUILayout.Label("Transition out start = " + animVat.currentTransition.ToTransitionTime);
-        }
+        if (animVat.currentTransition == null) return;
+
+        GUILayout.Label("Transition in start = " + animVat.currentTransition.ExitTime);
+        GUILayout.Label("Transition length = " + animVat.currentTransition.TransitionDuration);
+        GUILayout.Label("Transition out start = " + animVat.currentTransition.ToTransitionTime);
+
+        float transitionEnterTextureTime = animVat.currentTransition.Transition.TextureLength * animVat.currentTransition.ExitTime;
+        float trasitionWindow = animVat.currentState.VAT.TextureLength - transitionEnterTextureTime - animVat.textureTime;
+
+
+        GUILayout.Label("Time to transition = " + Mathf.Abs((trasitionWindow)));
     }
     void DrawRightSection(AnimatorVAT animVat)
     {
         VATState[] states = animVat.animatorController.States;
         float height = 50;
         Vector2 startPosition = new Vector2(400, 40);
-    
+
         for (int i = 0; i < states.Length; i++)
         {
             bool isCurrentState = animVat.currentState == states[i];
@@ -113,21 +118,25 @@ public class VATViewer : EditorWindow
             else
             {
                 GUI.color = new Color(2.0f, 1.7f, 1.7f);
-                float widthMult = animVat.animationTime / animVat.currentState.VAT.Duration;
+                float textureDuration = animVat.CurrentVAT.TextureLength;
+                float widthMult = +animVat.textureTime / textureDuration;
                 if (animVat.inTransition)
                 {
                     GUI.color = new Color(0.5f, 0.5f, 1.0f);
-                    widthMult = animVat.animationTime / animVat.currentTransition.Length;
+                    float transitionDuration = animVat.currentTransition.Transition.TextureLength;
+                    widthMult = animVat.textureTime / transitionDuration;
                 }
                 GUI.Box(stateRect, "");
                 GUI.color = new Color(10.0f, 10.0f, 10.0f);
-             
-                Rect LineRect = new Rect(new Vector2(stateRect.x, stateRect.y + 34), new Vector2(stateRect.width* widthMult, 2));
+
+                Rect LineRect = new Rect(new Vector2(stateRect.x, stateRect.y + 34), new Vector2(stateRect.width * widthMult, 2));
                 GUI.Box(LineRect, "");
             }
-            
+
             GUI.color = lastcolor;
             GUI.Label(stateRect, states[i].StateName);
+
+
         }
     }
 }

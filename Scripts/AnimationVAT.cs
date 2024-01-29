@@ -4,14 +4,15 @@ using UnityEngine;
 
 public class AnimationVAT : ScriptableObject
 {
-    public Texture2D VATTexture;
-    public Texture2D VATNormal;
-    public Texture2D VATTangent;
-    public float Duration;
+    public float AnimDelta = 0.025f;
+    public float TextureStartTime;
     public VATEvent[] Events;
     public bool IsLooped = false;
     public float AnimationSpeed =1;
-
+    public int Frames;
+    public float TextureEndTime;
+    public float Duration { get { return Frames * AnimDelta; } }
+    public float TextureLength { get { return TextureEndTime - TextureStartTime; } }
     [System.Serializable]
     public struct VATEvent {
         public float Time;
