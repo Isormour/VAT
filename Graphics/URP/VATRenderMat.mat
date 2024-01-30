@@ -64,7 +64,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PosTex:
-        m_Texture: {fileID: 2800000, guid: 727111aa3aa5d5746a427887ae855a65, type: 2}
+        m_Texture: {fileID: 2800000, guid: 1625d990ae9be8049881460585769636, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -72,11 +72,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATNormalTexture:
-        m_Texture: {fileID: 2800000, guid: 8b111afdbe21bcd45a2f08d19996423c, type: 2}
+        m_Texture: {fileID: 2800000, guid: d6c170d4666a29140ad765911a5aa401, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VATTangentTexture:
-        m_Texture: {fileID: 2800000, guid: 0f5a9b2d95812d347a29ad2fdf6e02c6, type: 2}
+        m_Texture: {fileID: 2800000, guid: 17b61f42aa86ae44f9f78f8f654d653a, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:

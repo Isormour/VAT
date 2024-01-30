@@ -38,7 +38,7 @@ Shader "VAT/VATIndirectBasic"
             struct shaderParams
             {
                 float4x4 tranformMatrix;
-                float animationTime;
+                float textureTime;
             };
             struct appdata
             {
@@ -76,7 +76,7 @@ Shader "VAT/VATIndirectBasic"
                 uint cmdID = GetCommandID(0);
                 uint ID = GetIndirectInstanceID(instance_id);
                 float x = (vid + 0.5) * ts.x;
-				float y =  _ParamsBuffer[ID].animationTime+_Time.x*(ID*0.01f);
+				float y =  _ParamsBuffer[ID].textureTime+_Time.x*(ID*0.01f);
 
 				float4 position = _VATPositionTexture.SampleLevel(sampler_VATPositionTexture, float2(x, y),0);
                 float4 normal = _VATNormalTexture.SampleLevel(sampler_VATPositionTexture, float2(x, y),0);

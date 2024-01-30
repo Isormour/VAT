@@ -1,15 +1,9 @@
-using Codice.Client.BaseCommands;
-using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
-using UnityEditorInternal;
 using UnityEngine;
-using static UnityEditor.VersionControl.Asset;
-using static UnityEngine.Random;
 using AnimatorController = UnityEditor.Animations.AnimatorController;
 
 public class AnimationCreator : EditorWindow
@@ -113,11 +107,14 @@ public class AnimationCreator : EditorWindow
             animatorController.States[i] = new VATState(clips[i].name, animationVAT, 0);
             totalVerts.AddRange(verts);
         }
-        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
+
         Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVerts);
         animatorController.VATPosition = VATTextures[0];
         animatorController.VATNormal = VATTextures[1];
         animatorController.VATTangent = VATTextures[2];
+        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
+      
+       
 
 
         AssetDatabase.SaveAssets();
@@ -218,8 +215,7 @@ public class AnimationCreator : EditorWindow
         }
         stateMachine.defaultState = defaultState;
         animatorController.BoundsScale = skin.transform.localScale.x;
-        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
-
+      
         List<VertInfo> totalVertexData = new List<VertInfo>();
         // gather vertex positions
 
@@ -287,7 +283,7 @@ public class AnimationCreator : EditorWindow
 
         SerializedObject animatorObject = new SerializedObject(animator.runtimeAnimatorController);
         animatorObject.ApplyModifiedProperties();
-
+        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
     }

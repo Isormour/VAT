@@ -38,6 +38,7 @@ Shader "VAT/VATIndirectBasic"
             struct shaderParams
             {
                 float4x4 tranformMatrix;
+                float vATAnimationTime;
             };
             struct appdata
             {
@@ -64,7 +65,6 @@ Shader "VAT/VATIndirectBasic"
             float4 _WorldPos;
             float4 _PosTex_TexelSize;
             float4 _MainTex_ST;
-            float _VATAnimationTime;
 
             v2f vert (appdata v,uint vid : SV_VertexID, const uint instance_id: SV_InstanceID)
             {
@@ -72,7 +72,7 @@ Shader "VAT/VATIndirectBasic"
                 uint cmdID = GetCommandID(0);
                 uint ID = GetIndirectInstanceID(instance_id);
                 float x = (vid + 0.5) * ts.x;
-				float y = _VATAnimationTime+_Time.x*(ID*0.01f);
+				float y = _ParamsBuffer[ID].vATAnimationTime;
 
 				float4 pos = tex2Dlod(_PosTex, float4(x, y, 0.0, 0.0));
 

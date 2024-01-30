@@ -8,8 +8,8 @@ public class AnimatorVAT
     public AnimationVAT CurrentVAT { private set; get; }
     public VATState currentState { private set; get; }
     public TransitionVAT currentTransition { private set; get; } = null;
-    public float textureTime { private set; get; } = 0;
-    public int eventIndex { private set; get; } = 0;
+    public float textureTime { protected set; get; } = 0;
+    public int eventIndex { protected set; get; } = 0;
     public AnimatorControllerVAT animatorController { private set; get; }
     public MeshRenderer renderer { private set; get; }
     public float SpeedMultiplier { private set; get; }  = 1;
@@ -65,6 +65,7 @@ public class AnimatorVAT
     public virtual void Update(float deltaTime)
     {
         UpdateTime(deltaTime);
+        UpdateCurrentState();
         CheckAnimationEvents();
     }
     public void Play(string name)
@@ -139,9 +140,8 @@ public class AnimatorVAT
                 }
             }
         }
-        UpdateCurrentState();
     }
-    void UpdateCurrentState()
+    protected virtual void UpdateCurrentState()
     {
         //TODO move 0.025f TimeDelta 
         float animEnd = currentState.VAT.TextureEndTime;

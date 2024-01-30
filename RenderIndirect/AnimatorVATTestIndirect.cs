@@ -9,8 +9,11 @@ public class AnimatorVATTestIndirect : MonoBehaviour
     public Material mat;
     [SerializeField] float TimeSpeedMult = 0.1f;
     AnimatorVATIndirect vat;
+    public float VATTextureTime{ get { return vat.textureTime; } }
+    public Transform CashedTransform { private set; get; }
     void Start()
     {
+        CashedTransform = this.transform;
         MaterialPropertyBlock matProperties = new MaterialPropertyBlock();
         vat = new AnimatorVATIndirect(matProperties,this.transform,mat,mesh,animatorController);
     }
@@ -19,13 +22,5 @@ public class AnimatorVATTestIndirect : MonoBehaviour
     void Update()
     {
         vat.Update(Time.deltaTime * TimeSpeedMult);
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            vat.Play("RunningState");
-        }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            vat.Play("AttackState");
-        }
     }
 }

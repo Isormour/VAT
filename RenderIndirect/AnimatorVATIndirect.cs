@@ -10,7 +10,8 @@ public class AnimatorVATIndirect : AnimatorVAT
     {
         this.mesh = mesh;
         this.mat = mat;
-        VATIndirectRenderer.Instance.AddObjectToRender<VATIndirectRenderer.TransformParam>(this);
+        this.owner = owner;
+       // VATIndirectRenderer.Instance.AddObjectToRender<VATIndirectRenderer.TransformParam>(this);
     }
     protected override void SetRenderer(MeshRenderer rend)
     {
@@ -19,5 +20,15 @@ public class AnimatorVATIndirect : AnimatorVAT
     protected override void ApplyPropertyBlock()
     {
         
+    }
+    protected override void UpdateCurrentState()
+    {
+        float animEnd = currentState.VAT.TextureEndTime;
+        float currentTime = currentState.VAT.TextureStartTime + textureTime;
+        if (!inTransition && currentState.VAT.IsLooped && currentTime >= animEnd)
+        {
+            textureTime = 0;
+            eventIndex = 0;
+        }
     }
 }
