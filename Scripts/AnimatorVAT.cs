@@ -8,25 +8,19 @@ public class AnimatorVAT
     public AnimationVAT CurrentVAT { private set; get; }
     public VATState currentState { private set; get; }
     public TransitionVAT currentTransition { private set; get; } = null;
-    public float textureTime { private set; get; } = 0;
-    public int eventIndex { private set; get; } = 0;
-
+    public float textureTime { protected set; get; } = 0;
+    public int eventIndex { protected set; get; } = 0;
     public AnimatorControllerVAT animatorController { private set; get; }
-
-    MaterialPropertyBlock materialBlock;
-
-    public MeshRenderer renderer;
-    public float SpeedMultiplier = 1;
+    public MeshRenderer renderer { private set; get; }
+    public float SpeedMultiplier { private set; get; }  = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
+    public MaterialPropertyBlock materialBlock { private set; get; }
 
     public AnimatorVAT(MaterialPropertyBlock matBlock, MeshRenderer renderer, AnimatorControllerVAT animatorController)
     {
         materialBlock = matBlock;
-        this.renderer = renderer;
-        Bounds temp = this.renderer.localBounds;
-        temp.extents  = animatorController.BoundsScale * this.renderer.localBounds.extents;
-        this.renderer.localBounds = temp;
+        SetRenderer(renderer);
         this.animatorController = animatorController;
 
         materialBlock.SetTexture("_VATAnimationTexture", animatorController.VATPosition);
@@ -34,9 +28,17 @@ public class AnimatorVAT
         materialBlock.SetTexture("_VATTangentTexture", animatorController.VATTangent);
 
         SetState(animatorController.States[0]);
-        renderer.SetPropertyBlock(materialBlock);
+        ApplyPropertyBlock();
     }
-   public VATState GetState(string name)
+    protected virtual void SetRenderer(MeshRenderer rend)
+    {
+        Bounds temp = this.renderer.localBounds;
+        temp.extents = animatorController.BoundsScale * this.renderer.localBounds.extents;
+        this.renderer = rend;
+        this.renderer.localBounds = temp;
+    }
+
+    public VATState GetState(string name)
     {
         for (int i = 0; i < this.animatorController.States.Length; i++)
         {
@@ -60,9 +62,10 @@ public class AnimatorVAT
         eventIndex = 0;
         CurrentVAT = VAT;
     }
-    public void Update(float deltaTime)
+    public virtual void Update(float deltaTime)
     {
         UpdateTime(deltaTime);
+        UpdateCurrentState();
         CheckAnimationEvents();
     }
     public void Play(string name)
@@ -74,7 +77,7 @@ public class AnimatorVAT
         if (nextState == null || currentState == nextState) return;
 
         TransitionVAT transition = GetTransition(nextState);
-        
+
 
         if (transition != null && !inTransition)
         {
@@ -100,7 +103,7 @@ public class AnimatorVAT
         }
         return transition;
     }
-    void UpdateTime(float deltaTime)
+    protected void UpdateTime(float deltaTime)
     {
         float animationSpeed = currentState.VAT.AnimationSpeed;
         textureTime += deltaTime * SpeedMultiplier * animationSpeed;
@@ -137,9 +140,8 @@ public class AnimatorVAT
                 }
             }
         }
-        UpdateCurrentState();
     }
-    void UpdateCurrentState()
+    protected virtual void UpdateCurrentState()
     {
         //TODO move 0.025f TimeDelta 
         float animEnd = currentState.VAT.TextureEndTime;
@@ -157,6 +159,10 @@ public class AnimatorVAT
         {
             materialBlock.SetFloat("_VATAnimationTime", currentTransition.Transition.TextureStartTime + textureTime);
         }
+        ApplyPropertyBlock();
+    }
+    protected virtual void ApplyPropertyBlock()
+    {
         renderer.SetPropertyBlock(materialBlock);
     }
     void CheckAnimationEvents()

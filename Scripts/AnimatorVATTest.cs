@@ -10,6 +10,10 @@ public class AnimatorVATTest : MonoBehaviour,IAnimatorVat
     {
         MaterialPropertyBlock matProperties = new MaterialPropertyBlock();
         Vat = new AnimatorVAT(matProperties, rend, animatorController);
+
+        Bounds b = rend.localBounds;
+        b.extents = b.extents * 100;
+        rend.localBounds = b;
     }
 
     // Update is called once per frame
