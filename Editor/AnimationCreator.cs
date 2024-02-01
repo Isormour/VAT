@@ -129,6 +129,8 @@ public class AnimationCreator : EditorWindow
     {
         if (!model.activeInHierarchy) model.SetActive(true);
         var animator = model.GetComponent<Animator>();
+        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+
         clips = animator.runtimeAnimatorController.animationClips;
         var skin = model.GetComponentInChildren<SkinnedMeshRenderer>();
         var vCount = skin.sharedMesh.vertexCount;

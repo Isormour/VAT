@@ -122,7 +122,7 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _TextureWidth: 4096
-    - _VATAnimationTime: 3.63
+    - _VATAnimationTime: 0
     - _VertexCount: 10
     - _WorkflowMode: 1
     - _ZWrite: 1
