@@ -98,7 +98,7 @@ Material:
     - _AnimationTime: -0.6
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _VATAnimationTime: 0.57
+    - _VATAnimationTime: 2.72
     - _VATDuration: 1
     m_Colors: []
   m_BuildTextureStacks: []

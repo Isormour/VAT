@@ -113,9 +113,6 @@ public class AnimationCreator : EditorWindow
         animatorController.VATNormal = VATTextures[1];
         animatorController.VATTangent = VATTextures[2];
         AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
-      
-       
-
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
