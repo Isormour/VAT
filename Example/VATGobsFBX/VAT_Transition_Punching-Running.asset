@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc64e4458cffd624fbc82d3bc7850c6b, type: 3}
+  m_Name: VAT_Transition_Punching-Running
+  m_EditorClassIdentifier: 
+  From:
+    StateName: Punching
+    VAT: {fileID: 11400000, guid: feaaceb605477cf41a65428f8d48aff4, type: 2}
+    Transitions:
+    - {fileID: 11400000}
+  To:
+    StateName: Running
+    VAT: {fileID: 11400000, guid: 075873f7ab3a7de42ad5c786e7a129a3, type: 2}
+    Transitions:
+    - {fileID: 11400000, guid: c6fbbac4db7e89b41a7d722ba6a8e838, type: 2}
+  Transition: {fileID: 11400000, guid: e1756bb5d2d0bc94ab89834fde25b3a4, type: 2}
+  FrameStart: 0
+  TransitionDuration: 0.25
+  TransitionOffset: 0
+  ExitTime: 0.7580645

@@ -9,7 +9,6 @@ using AnimatorController = UnityEditor.Animations.AnimatorController;
 public class AnimationCreator : EditorWindow
 {
     public ComputeShader infoTexGen;
-    public Material animBaseMaterial;
     public AnimationClip[] clips;
     public GameObject model;
     public static float AnimDelta = 0.025f;
@@ -35,7 +34,6 @@ public class AnimationCreator : EditorWindow
     void DrawProperties()
     {
         infoTexGen = (ComputeShader)EditorGUILayout.ObjectField("infoTexGen", infoTexGen, typeof(ComputeShader), false);
-        animBaseMaterial = (Material)EditorGUILayout.ObjectField("playShader", animBaseMaterial, typeof(Material), false);
         model = (GameObject)EditorGUILayout.ObjectField("model", model, typeof(GameObject), true);
     }
     void Setup()
@@ -44,85 +42,19 @@ public class AnimationCreator : EditorWindow
         {
             infoTexGen = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.db.vat_animator/Graphics/MeshInfoTextureGen.compute");
         }
-
-        if (animBaseMaterial == null)
-        {
-            animBaseMaterial = AssetDatabase.LoadAssetAtPath<Material>("Packages/com.db.vat_animator/Graphics/AnimatedMatBasic.mat");
-        }
     }
     void DrawButton()
     {
-        if (animBaseMaterial == null) return;
         if (infoTexGen == null) return;
         if (model == null) return;
 
-        if (GUILayout.Button("Bake Clips"))
-        {
-            BakeForClips();
-        }
         if (GUILayout.Button("Bake Animator"))
         {
-            BakeForAnimator();
+            BakeAnimator();
         }
     }
 
-    void BakeForClips()
-    {
-        if (!model.gameObject.activeInHierarchy) model.gameObject.SetActive(true);
-        var animator = model.GetComponent<Animator>();
-        clips = animator.runtimeAnimatorController.animationClips;
-        var skin = model.GetComponentInChildren<SkinnedMeshRenderer>();
-        var vCount = skin.sharedMesh.vertexCount;
-        var texWidth = Mathf.NextPowerOfTwo(vCount);
-        var mesh = new Mesh();
-        string name = model.name;
-
-        var folderName = "BakedAnimationTex";
-        var folderPath = Path.Combine("Assets/VAT", folderName);
-
-        if (!AssetDatabase.IsValidFolder("Assets/VAT"))
-            AssetDatabase.CreateFolder("Assets", "VAT");
-
-        if (!AssetDatabase.IsValidFolder(folderPath))
-            AssetDatabase.CreateFolder("Assets/VAT", folderName);
-
-        var subFolder = name;
-        var subFolderPath = Path.Combine(folderPath, subFolder);
-        if (!AssetDatabase.IsValidFolder(subFolderPath))
-            AssetDatabase.CreateFolder(folderPath, subFolder);
-
-        AnimatorControllerVAT animatorController = CreateInstance<AnimatorControllerVAT>();
-        animatorController.States = new VATState[clips.Length];
-
-        List<VertInfo> totalVerts = new List<VertInfo>();
-        float startTime = 0;
-        for (int i = 0; i < clips.Length; i++)
-        {
-            int frames = Mathf.NextPowerOfTwo((int)(clips[i].length / AnimDelta));
-            int dt = (int)(clips[i].length / frames);
-            List<VertInfo> verts = SampleAnimation(clips[i], skin, mesh, vCount, frames, dt, model.gameObject);
-            AnimationVAT animationVAT = CreateVATObject(subFolder, clips[i].name, clips[i].length, clips[i].events, clips[i].isLooping);
-            animationVAT.TextureStartTime = startTime;
-            startTime += animationVAT.Duration;
-            animatorController.States[i] = new VATState(clips[i].name, animationVAT, 0);
-            totalVerts.AddRange(verts);
-        }
-
-        Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVerts);
-        animatorController.VATPosition = VATTextures[0];
-        animatorController.VATNormal = VATTextures[1];
-        animatorController.VATTangent = VATTextures[2];
-        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        animBaseMaterial.SetTexture("_VATAnimationTexture", VATTextures[0]);
-        animBaseMaterial.SetTexture("_VATNormalTexture", VATTextures[1]);
-        animBaseMaterial.SetTexture("_VATTangentTexture", VATTextures[2]);
-    }
-
-    void BakeForAnimator()
+    void BakeAnimator()
     {
         if (!model.activeInHierarchy) model.SetActive(true);
         var animator = model.GetComponent<Animator>();
@@ -158,94 +90,70 @@ public class AnimationCreator : EditorWindow
         Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition = new Dictionary<AnimatorState, AnimatorStateTransition[]>();
         Dictionary<AnimatorState, AnimationVAT> StateToVat = new Dictionary<AnimatorState, AnimationVAT>();
         Dictionary<AnimatorState, TransitionVAT[]> StateToVATTransition = new Dictionary<AnimatorState, TransitionVAT[]>();
-        //store and remove all transition so animation will be baked without them
-        for (int i = 0; i < states.Length; i++)
-        {
-            StateToTransition.Add(states[i].state, new AnimatorStateTransition[states[i].state.transitions.Length]);
-            StateToVATTransition.Add(states[i].state, new TransitionVAT[states[i].state.transitions.Length]);
-            for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
-            {
-                StateToTransition[states[i].state][j] = Instantiate(states[i].state.transitions[j]);
-                StateToTransition[states[i].state][j].name = states[i].state.transitions[j].name;
-            }
-            for (int j = 0; j < states[i].state.transitions.Length; j++)
-            {
-                states[i].state.RemoveTransition(states[i].state.transitions[j]);
-            }
-        }
 
-        for (int i = 0; i < stateMachine.states.Length; i++)
-        {
-            AnimatorState state = stateMachine.states[i].state;
-            AnimationClip clip = (AnimationClip)state.motion;
-            StateToVat.Add(state, CreateVATObject(subFolderPath, clip.name, clip.length, clip.events, clip.isLooping));
-        }
+        StoreTransitions(states, StateToTransition, StateToVATTransition);
+        CreateVATAssets(subFolderPath, stateMachine, StateToVat);
+
         AnimatorControllerVAT animatorController = CreateInstance<AnimatorControllerVAT>();
         EditorUtility.SetDirty(animatorController);
-
         animatorController.States = new VATState[states.Length];
-        // create vat states
-        for (int i = 0; i < animatorController.States.Length; i++)
-        {
-            int transitionCount = StateToVATTransition[states[i].state].Length;
-            animatorController.States[i] = new VATState(states[i].state.name, StateToVat[states[i].state], transitionCount);
-        }
+
+        CreateVATStates(states, StateToVat, StateToVATTransition, animatorController);
         AnimatorState defaultState = stateMachine.defaultState;
-        //creatre transitions
+
+        CreateVATTransitions(subFolderPath, stateMachine, states, StateToTransition, animatorController);
+        stateMachine.defaultState = defaultState;
+        animatorController.BoundsScale = skin.transform.localScale.x;
+
+        List<VertInfo> totalVertexData;
+        float animStart;
+        int totalFrames;
+
+        BakeVATs(animator,
+            skin,
+            vCount,
+            mesh,
+            stateMachine,
+            states,
+            StateToTransition,
+            StateToVat,
+            animatorController,
+            out totalVertexData,
+            out animStart,
+            out totalFrames);
+
+        // set time stamps for texture
+        SetTimestampsForVATs(states, StateToTransition, StateToVat, animatorController, animStart, totalFrames);
+        ApplyOriginalTransitions(stateMachine, states, StateToTransition);
+        stateMachine.defaultState = defaultState;
+        EditorUtility.SetDirty(controller);
+
+        AssetDatabase.SaveAssets();
+
+        Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVertexData);
+        animatorController.VATPosition = VATTextures[0];
+        animatorController.VATNormal = VATTextures[1];
+        animatorController.VATTangent = VATTextures[2];
+
+        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    private static void ApplyOriginalTransitions(AnimatorStateMachine stateMachine, ChildAnimatorState[] states, Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition)
+    {
         for (int i = 0; i < states.Length; i++)
         {
             for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
             {
-                stateMachine.defaultState = states[i].state;
-
-                AnimatorStateTransition animTransition = StateToTransition[states[i].state][j];
-              
-                TransitionVAT transitionVat = CreateInstance<TransitionVAT>();
-                transitionVat.From = animatorController.States[i];
-                transitionVat.To = animatorController.GetState(animTransition.destinationState.name);
-                transitionVat.ExitTime =  animTransition.exitTime;
-                transitionVat.TransitionDuration = animTransition.duration;
-                transitionVat.TransitionOffset = animTransition.offset;
-                string transitionName = states[i].state.name + "-" + animTransition.destinationState.name;
-
-                string transitionAssetName = "VAT_Transition_" + transitionName;
-                string transitionAnimationName = transitionVat.From.StateName + "_TO_" + transitionVat.To.StateName;
-                animatorController.States[i].Transitions[j] = transitionVat;
-                transitionVat.Transition = CreateVATObject(subFolderPath, transitionAnimationName, transitionVat.TransitionDuration, new AnimationEvent[0], false);
-                AssetDatabase.CreateAsset(transitionVat, Path.Combine(subFolderPath, transitionAssetName + ".asset"));
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
+                stateMachine.states[i].state.AddTransition(StateToTransition[states[i].state][j]);
+                AssetDatabase.AddObjectToAsset(StateToTransition[states[i].state][j], stateMachine.states[i].state);
             }
         }
-        stateMachine.defaultState = defaultState;
-        animatorController.BoundsScale = skin.transform.localScale.x;
-      
-        List<VertInfo> totalVertexData = new List<VertInfo>();
-        // gather vertex positions
+    }
 
-        float animStart = 0;
-        int totalFrames = 0;
-        for (int i = 0; i < states.Length; i++)
-        {
-            AnimatorState state = states[i].state;
-            EditorUtility.SetDirty(state);
-            stateMachine.defaultState = state;
-            totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
-            StateToVat[state].TextureStartTime = animStart;
-            animStart += StateToVat[state].Duration;
-            totalFrames += StateToVat[state].Frames;
-            for (int j = 0; j < StateToTransition[state].Length; j++)
-            {
-                state.AddTransition(StateToTransition[state][j]);
-                totalVertexData.AddRange(GetClipData(animator, state, StateToTransition[state][j], skin, mesh, vCount));
-                state.RemoveTransition(StateToTransition[state][j]);
-                 AnimationVAT transitionObject = animatorController.States[i].Transitions[j].Transition;
-                transitionObject.TextureStartTime = animStart;
-                animStart += transitionObject.Duration;
-                totalFrames += transitionObject.Frames;
-            }
-        }
-        // set time stamps for texture
+    private static void SetTimestampsForVATs(ChildAnimatorState[] states, Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition, Dictionary<AnimatorState, AnimationVAT> StateToVat, AnimatorControllerVAT animatorController, float animStart, int totalFrames)
+    {
         float totalTime = animStart;
         for (int i = 0; i < states.Length; i++)
         {
@@ -266,38 +174,102 @@ public class AnimationCreator : EditorWindow
                 temp.ApplyModifiedProperties();
             }
         }
+    }
 
-        EditorUtility.SetDirty(stateMachine);
-        EditorUtility.SetDirty(controller);
-        stateMachine.defaultState = defaultState;
-        // apply old transitions
-        AnimatorController AC = (AnimatorController)controller;
-        AnimatorControllerLayer[] layers = AC.layers;
+    private void BakeVATs(Animator animator, SkinnedMeshRenderer skin, int vCount, Mesh mesh, AnimatorStateMachine stateMachine, ChildAnimatorState[] states, Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition, Dictionary<AnimatorState, AnimationVAT> StateToVat, AnimatorControllerVAT animatorController, out List<VertInfo> totalVertexData, out float animStart, out int totalFrames)
+    {
+        // gather vertex positions
+        totalVertexData = new List<VertInfo>();
+        animStart = 0;
+        totalFrames = 0;
+        for (int i = 0; i < states.Length; i++)
+        {
+            AnimatorState state = states[i].state;
+            EditorUtility.SetDirty(state);
+            stateMachine.defaultState = state;
+            totalVertexData.AddRange(GetClipData(animator, state, skin, mesh, vCount));
+            StateToVat[state].TextureStartTime = animStart;
+            animStart += StateToVat[state].Duration;
+            totalFrames += StateToVat[state].Frames;
+            for (int j = 0; j < StateToTransition[state].Length; j++)
+            {
+                state.AddTransition(StateToTransition[state][j]);
+                totalVertexData.AddRange(GetClipData(animator, state, StateToTransition[state][j], skin, mesh, vCount));
+                state.RemoveTransition(StateToTransition[state][j]);
+                AnimationVAT transitionObject = animatorController.States[i].Transitions[j].Transition;
+                transitionObject.TextureStartTime = animStart;
+                animStart += transitionObject.Duration;
+                totalFrames += transitionObject.Frames;
+            }
+        }
+    }
+
+    private void CreateVATTransitions(string subFolderPath, AnimatorStateMachine stateMachine, ChildAnimatorState[] states, Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition, AnimatorControllerVAT animatorController)
+    {
+        //creatre transitions
         for (int i = 0; i < states.Length; i++)
         {
             for (int j = 0; j < StateToTransition[states[i].state].Length; j++)
-            {  
-                stateMachine.states[i].state.AddTransition(StateToTransition[states[i].state][j]);
-                AssetDatabase.AddObjectToAsset(StateToTransition[states[i].state][j], stateMachine.states[i].state);
+            {
+                stateMachine.defaultState = states[i].state;
+
+                AnimatorStateTransition animTransition = StateToTransition[states[i].state][j];
+
+                TransitionVAT transitionVat = CreateInstance<TransitionVAT>();
+                transitionVat.From = animatorController.States[i];
+                transitionVat.To = animatorController.GetState(animTransition.destinationState.name);
+                transitionVat.ExitTime = animTransition.exitTime;
+                transitionVat.TransitionDuration = animTransition.duration;
+                transitionVat.TransitionOffset = animTransition.offset;
+                string transitionName = states[i].state.name + "-" + animTransition.destinationState.name;
+
+                string transitionAssetName = "VAT_Transition_" + transitionName;
+                string transitionAnimationName = transitionVat.From.StateName + "_TO_" + transitionVat.To.StateName;
+                animatorController.States[i].Transitions[j] = transitionVat;
+                transitionVat.Transition = CreateVATObject(subFolderPath, transitionAnimationName, transitionVat.TransitionDuration, new AnimationEvent[0], false);
+                AssetDatabase.CreateAsset(transitionVat, Path.Combine(subFolderPath, transitionAssetName + ".asset"));
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
             }
         }
-        AC.layers = layers;
-        EditorUtility.SetDirty(AC);
-        AssetDatabase.SaveAssets();
+    }
 
-        Texture2D[] VATTextures = CreateVatTextures(texWidth, animatorController, vCount, subFolderPath, totalVertexData);
-        animatorController.VATPosition = VATTextures[0];
-        animatorController.VATNormal = VATTextures[1];
-        animatorController.VATTangent = VATTextures[2];
+    private static void CreateVATStates(ChildAnimatorState[] states, Dictionary<AnimatorState, AnimationVAT> StateToVat, Dictionary<AnimatorState, TransitionVAT[]> StateToVATTransition, AnimatorControllerVAT animatorController)
+    {
+        for (int i = 0; i < animatorController.States.Length; i++)
+        {
+            int transitionCount = StateToVATTransition[states[i].state].Length;
+            animatorController.States[i] = new VATState(states[i].state.name, StateToVat[states[i].state], transitionCount);
+        }
+    }
 
-        SerializedObject animatorControllerObject = new SerializedObject(animatorController);
-        animatorControllerObject.ApplyModifiedProperties();
+    private void CreateVATAssets(string subFolderPath, AnimatorStateMachine stateMachine, Dictionary<AnimatorState, AnimationVAT> StateToVat)
+    {
+        for (int i = 0; i < stateMachine.states.Length; i++)
+        {
+            AnimatorState state = stateMachine.states[i].state;
+            AnimationClip clip = (AnimationClip)state.motion;
+            StateToVat.Add(state, CreateVATObject(subFolderPath, clip.name, clip.length, clip.events, clip.isLooping));
+        }
+    }
 
-        SerializedObject animatorObject = new SerializedObject(animator.runtimeAnimatorController);
-        animatorObject.ApplyModifiedProperties();
-        AssetDatabase.CreateAsset(animatorController, Path.Combine(subFolderPath, "VAT_CONTROLLER_" + name + ".asset"));
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+    private static void StoreTransitions(ChildAnimatorState[] states, Dictionary<AnimatorState, AnimatorStateTransition[]> StateToTransition, Dictionary<AnimatorState, TransitionVAT[]> StateToVATTransition)
+    {
+        //store and remove all transition so animation will be baked without them
+        for (int sIndex = 0; sIndex < states.Length; sIndex++)
+        {
+            StateToTransition.Add(states[sIndex].state, new AnimatorStateTransition[states[sIndex].state.transitions.Length]);
+            StateToVATTransition.Add(states[sIndex].state, new TransitionVAT[states[sIndex].state.transitions.Length]);
+            for (int tIndex = 0; tIndex < StateToTransition[states[sIndex].state].Length; tIndex++)
+            {
+                StateToTransition[states[sIndex].state][tIndex] = Instantiate(states[sIndex].state.transitions[tIndex]);
+                StateToTransition[states[sIndex].state][tIndex].name = states[sIndex].state.transitions[tIndex].name;
+            }
+            for (int j = 0; j < states[sIndex].state.transitions.Length; j++)
+            {
+                states[sIndex].state.RemoveTransition(states[sIndex].state.transitions[j]);
+            }
+        }
     }
 
     private List<VertInfo> GetClipData(Animator animator, AnimatorState state, AnimatorStateTransition transition, SkinnedMeshRenderer skin, Mesh mesh, int vCount)
@@ -425,7 +397,7 @@ public class AnimationCreator : EditorWindow
 
         int frames = totalVerts.Count / vCount;
         RenderTexture[] textures = CreateTextures(texWidth, frames, model.name);
-        GenerateVATTextures(textures, totalVerts, this.infoTexGen, vCount, frames);
+        ApplyDataToTextures(textures, totalVerts, this.infoTexGen, vCount, frames);
         Texture2D[] VATTextures = CreateTextureAssets(textures, subfolder);
         return VATTextures;
     }
@@ -447,7 +419,7 @@ public class AnimationCreator : EditorWindow
         }
         return new RenderTexture[] { pRt, nRt, tRt };
     }
-    void GenerateVATTextures(RenderTexture[] textures, List<VertInfo> infoList, ComputeShader shader, int vCount, int frames)
+    void ApplyDataToTextures(RenderTexture[] textures, List<VertInfo> infoList, ComputeShader shader, int vCount, int frames)
     {
         var buffer = new ComputeBuffer(infoList.Count, System.Runtime.InteropServices.Marshal.SizeOf(typeof(VertInfo)));
         buffer.SetData(infoList.ToArray());
