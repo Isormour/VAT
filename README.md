@@ -5,16 +5,16 @@ Way of optimalization for skinned mesh rendering by baking animation in to textu
 Contains VAT Generation based on Animator with transitions included.
 By default using URP
 
-Three way of rendering.
-Mesh Render + ShaderGraph
-Mesh Renderer + Shader
-Graphics.RenderMeshIndirect
+<p align="left">>Three way of rendering.</p>
+<p align="left">Mesh Render + ShaderGraph</p>
+<p align="left">Mesh Renderer + Shader</p>
+<p align="left">Graphics.RenderMeshIndirect</p>
 
-Supports URP and HDRP
+<p align="left">Supports URP and HDRP</p>
 
-Benchmarking for 1000 units.
-![alt text](https://imgur.com/a/6adGGo7)
+<p align="left">Benchmarking for 1000 units.</p>
+https://i.imgur.com/557L3e2.png
 
-TODO:
-Add shadows for indirect rendering.
-Cleanup packages for URP and HDRP shaders with examples.
+<p align="left">TODO:</p>
+<p align="left">Add shadows for indirect rendering.</p>
+<p align="left">Cleanup packages for URP and HDRP shaders with examples.</p>
