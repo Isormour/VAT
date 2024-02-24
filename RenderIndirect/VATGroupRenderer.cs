@@ -1,17 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class VATGroupRenderer<T>
+public class VATGroupRenderer : IRenderStruct
 {
     GraphicsBuffer commandBuf;
     GraphicsBuffer.IndirectDrawIndexedArgs[] commandData;
     ComputeBuffer paramsBuffer;
     int instances;
-
-    public delegate T Setter(AnimatorVATIndirect VATAnimator);
-    public Setter SetParams = null;
     Tuple<Mesh, Material> group;
     List<AnimatorVATIndirect> objectsToRender;
+
+   public struct BasicInstancedParams
+    {
+        public Matrix4x4 transformMatrix;
+        public float animationTime;
+    }
     public VATGroupRenderer(Tuple<Mesh, Material> group)
     {
         this.group = group;
@@ -26,6 +30,7 @@ public class VATGroupRenderer<T>
         commandBuf?.Release();
         commandBuf = null;
         paramsBuffer?.Release();
+        paramsBuffer = null;
     }
     public void DrawGroup()
     {
@@ -33,7 +38,7 @@ public class VATGroupRenderer<T>
 
         rp.worldBounds = new Bounds(Vector3.zero, 10000 * Vector3.one); // use tighter bounds for better FOV culling
         rp.matProps = new MaterialPropertyBlock();
-        paramsBuffer.SetData(CreateParamsArray());
+        SetParamsBufferData(paramsBuffer);
         rp.matProps.SetBuffer("_ParamsBuffer", paramsBuffer);
 
         for (int i = 0; i < 1; i++)
@@ -47,19 +52,31 @@ public class VATGroupRenderer<T>
 
     internal void AddAnimator(AnimatorVATIndirect vat)
     {
+        this.paramsBuffer?.Release();
         objectsToRender.Add(vat);
         instances = objectsToRender.Count;
-        this.paramsBuffer?.Release();
-        int size = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
+        int size = GetStructSize();
         this.paramsBuffer = new ComputeBuffer(instances, size);
     }
-    T[] CreateParamsArray()
+
+    public void SetParamsBufferData(UnityEngine.ComputeBuffer buffer)
     {
-        T[] shaderParams = new T[instances];
-        for (int i = 0; i < instances; i++)
+        BasicInstancedParams[] objParams = new BasicInstancedParams[instances];
+        for (int i = 0; i < objParams.Length; i++)
         {
-            shaderParams[i] = SetParams(objectsToRender[i]);
+            objParams[i]= new BasicInstancedParams();
+            objParams[i].animationTime = objectsToRender[i].textureTime;
+            objParams[i].transformMatrix = GetMatrixFromTransform(objectsToRender[i].owner);
         }
-        return shaderParams;
+        buffer.SetData(objParams);
     }
+    public int GetStructSize()
+    {
+        return System.Runtime.InteropServices.Marshal.SizeOf(typeof(BasicInstancedParams));
+    }
+    Matrix4x4 GetMatrixFromTransform(Transform t)
+    {
+        return Matrix4x4.TRS(t.localPosition, t.rotation, t.localScale);
+    }
+
 }

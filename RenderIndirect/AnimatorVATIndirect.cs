@@ -11,7 +11,7 @@ public class AnimatorVATIndirect : AnimatorVAT
         this.mesh = mesh;
         this.mat = mat;
         this.owner = owner;
-       // VATIndirectRenderer.Instance.AddObjectToRender<VATIndirectRenderer.TransformParam>(this);
+        VATIndirectRenderer.Instance.AddObjectToRender<VATGroupRenderer.BasicInstancedParams>(this);
     }
     protected override void SetRenderer(MeshRenderer rend)
     {

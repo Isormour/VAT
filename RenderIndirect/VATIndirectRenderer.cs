@@ -1,65 +1,64 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 
-public class VATIndirectRenderer : MonoBehaviour
+public class VATIndirectRenderer : MonoBehaviour 
 {
-    public Material material;
-    public Mesh mesh;
+    public static VATIndirectRenderer Instance;
+    Dictionary<Type, Dictionary<Tuple<Mesh, Material>,VATGroupRenderer>> RenderersByStructType;
 
-    GraphicsBuffer commandBuf;
-    GraphicsBuffer.IndirectDrawIndexedArgs[] commandData;
-    ComputeBuffer paramsBuffer;
-    int instances = 1024;
-    public AnimatorVATTestIndirect[] owners;
-
-    struct ShaderParams
+    internal void AddObjectToRender<T>(AnimatorVATIndirect animatorVATIndirect)
     {
-        public Matrix4x4 tranformMatrix;
-        public float vATAnimationTime;
+        if (!RenderersByStructType.ContainsKey(typeof(T)))
+        {
+            RenderersByStructType.Add(typeof(T), new Dictionary<Tuple<Mesh, Material>, VATGroupRenderer>());
+        }
+        
+        Dictionary<Tuple<Mesh, Material>, VATGroupRenderer> structGroups = RenderersByStructType[typeof(T)];
+       
+        Material mat = animatorVATIndirect.mat;
+        Mesh mesh = animatorVATIndirect.mesh;
+        Tuple<Mesh, Material> keyPair = new Tuple<Mesh, Material>(mesh,mat);
+        if (!structGroups.ContainsKey(keyPair))
+        {
+            structGroups.Add(keyPair, new VATGroupRenderer(keyPair));
+        }
+
+        structGroups[keyPair].AddAnimator(animatorVATIndirect);
     }
 
-    void Start()
+    void Awake()
     {
-        instances = owners.Length;
-        commandBuf = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
-        commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[1];
-        int size = System.Runtime.InteropServices.Marshal.SizeOf(typeof(ShaderParams));
-        paramsBuffer = new ComputeBuffer(instances, size);
-        ShaderParams[] shaderParams = new ShaderParams[owners.Length];
+        if (Instance != null)
+        {
+            Destroy(this.gameObject);
+            return;
+        }
+        Instance = this;
+        RenderersByStructType = new Dictionary<Type, Dictionary<Tuple<Mesh, Material>, VATGroupRenderer>>();
     }
 
     void OnDestroy()
     {
-        commandBuf?.Release();
-        commandBuf = null;
-        paramsBuffer?.Release();
+        foreach (var renderers in RenderersByStructType.Values)
+        {
+            foreach (var renderer in renderers.Values)
+            {
+                renderer.Deinitialize();
+            }
+        }
     }
 
 
     void Update()
     {
-        ShaderParams[] shaderParams = new ShaderParams[instances];
-        for (int i = 0; i < instances; i++)
+        foreach (var renderers in RenderersByStructType.Values)
         {
-            shaderParams[i].tranformMatrix = Matrix4x4.TRS(owners[i].CashedTransform.localPosition, owners[i].CashedTransform.localRotation, owners[i].CashedTransform.localScale);
-            shaderParams[i].vATAnimationTime = owners[i].VATTextureTime;
+            foreach (var renderer in renderers.Values)
+            {
+                renderer.DrawGroup();
+            }
         }
-        paramsBuffer.SetData(shaderParams);
-
-        RenderParams rp = new RenderParams(material);
-
-        rp.worldBounds = new Bounds(Vector3.zero, 10000 * Vector3.one); // use tighter bounds for better FOV culling
-        rp.matProps = new MaterialPropertyBlock();
-
-        rp.matProps.SetBuffer("_ParamsBuffer", paramsBuffer);
-
-        for (int i = 0; i < 1; i++)
-        {
-            commandData[i].indexCountPerInstance = mesh.GetIndexCount(0);
-            commandData[i].instanceCount = (uint)instances;
-        }
-        commandBuf.SetData(commandData);
-        Graphics.RenderMeshIndirect(rp, mesh, commandBuf, 1);
     }
 }
