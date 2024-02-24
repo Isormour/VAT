@@ -28,7 +28,7 @@ public class AnimationCreator : EditorWindow
     private void OnGUI()
     {
         DrawProperties();
-        Setup();
+        SetupCreator();
         DrawButton();
     }
     void DrawProperties()
@@ -36,7 +36,7 @@ public class AnimationCreator : EditorWindow
         infoTexGen = (ComputeShader)EditorGUILayout.ObjectField("infoTexGen", infoTexGen, typeof(ComputeShader), false);
         model = (GameObject)EditorGUILayout.ObjectField("model", model, typeof(GameObject), true);
     }
-    void Setup()
+    void SetupCreator()
     {
         if (infoTexGen == null)
         {
@@ -282,35 +282,6 @@ public class AnimationCreator : EditorWindow
         List<VertInfo> infoList = SampleAnimator(anim, state, skin, mesh, vCount, length, startTime);
         return infoList;
     }
-
-    public List<VertInfo> GetClipData(AnimationClip clip, SkinnedMeshRenderer skin, Mesh mesh, int vCount, GameObject modelObject)
-    {
-        int frames = Mathf.NextPowerOfTwo((int)(clip.length / AnimDelta));
-        int dt = (int)(clip.length / frames);
-
-        List<VertInfo> infoList = SampleAnimation(clip, skin, mesh, frames, dt, vCount, modelObject);
-        return infoList;
-    }
-
-    private List<VertInfo> SampleAnimation(AnimationClip clip, SkinnedMeshRenderer skin, Mesh mesh, int frames, float deltaTime, int vCount, GameObject modelObject)
-    {
-        List<VertInfo> infoList = new List<VertInfo>();
-        for (var i = 0; i < frames; i++)
-        {
-            clip.SampleAnimation(modelObject, deltaTime * i);
-            skin.BakeMesh(mesh, true);
-
-            infoList.AddRange(Enumerable.Range(0, vCount)
-                .Select(idx => new VertInfo()
-                {
-                    position = mesh.vertices[idx] * skin.transform.localScale.x,
-                    normal = mesh.normals[idx] * skin.transform.localScale.y,
-                    tangent = mesh.tangents[idx] * skin.transform.localScale.z
-                })
-            );
-        }
-        return infoList;
-    }
     public List<VertInfo> SampleAnimator(Animator anim, AnimatorState state, SkinnedMeshRenderer skin, Mesh mesh, int vCount, float length = -1, float startTime = -1)
     {
         AnimationClip clip = (AnimationClip)state.motion;
@@ -341,37 +312,6 @@ public class AnimationCreator : EditorWindow
             );
         }
         return infoList;
-    }
-
-    // TODO: get vert info for transitions
-    public void CreateVATTransitionTexture(Animator anim, AnimatorState state, int texWidth, SkinnedMeshRenderer skin, Mesh mesh, int vCount, string subFolderPath, string transitionName, ComputeShader shader, TransitionVAT transition)
-    {
-        AnimationClip clip = (AnimationClip)state.motion;
-        var frames = Mathf.NextPowerOfTwo((int)(transition.TransitionDuration / AnimDelta));
-        var dt = transition.TransitionDuration / frames;
-
-        transition.TransitionDuration = frames * dt;
-
-        var infoList = new List<VertInfo>();
-        anim.Rebind();
-        anim.Play(state.name);
-        anim.Update(transition.ExitTime - dt);
-
-        skin.BakeMesh(mesh, true);
-        for (var i = 0; i < frames; i++)
-        {
-            anim.Update(dt);
-            skin.BakeMesh(mesh, true);
-
-            infoList.AddRange(Enumerable.Range(0, vCount)
-                .Select(idx => new VertInfo()
-                {
-                    position = mesh.vertices[idx] * skin.transform.localScale.x,
-                    normal = mesh.normals[idx] * skin.transform.localScale.y,
-                    tangent = mesh.tangents[idx] * skin.transform.localScale.z
-                })
-            );
-        }
     }
     Texture2D[] CreateVatTextures(int texWidth, AnimatorControllerVAT controller, int vCount, string subfolder, List<VertInfo> totalVerts)
     {
@@ -477,12 +417,5 @@ public class AnimationCreator : EditorWindow
         AssetDatabase.CreateAsset(VATObject, Path.Combine(subFolderPath, "VAT_" + clipName + ".asset"));
         return VATObject;
 
-    }
-    struct VATAnimData
-    {
-        public List<VertInfo> VertexData;
-        public float Length;
-        public int StartFrame;
-        public AnimationEvent events;
     }
 }
