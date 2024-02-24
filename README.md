@@ -13,7 +13,7 @@ By default using URP
 <p align="left">Supports URP and HDRP</p>
 
 <p align="left">Benchmarking for 1000 units.</p>
-https://i.imgur.com/557L3e2.png
+![alt text](https://i.imgur.com/557L3e2.png)
 
 <p align="left">TODO:</p>
 <p align="left">Add shadows for indirect rendering.</p>
