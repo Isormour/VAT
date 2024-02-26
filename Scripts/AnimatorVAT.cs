@@ -22,17 +22,13 @@ public class AnimatorVAT
         materialBlock = matBlock;
         this.animatorController = animatorController;
         SetRenderer(renderer);
-
-        materialBlock.SetTexture("_VATAnimationTexture", animatorController.VATPosition);
-        materialBlock.SetTexture("_VATNormalTexture", animatorController.VATNormal);
-        materialBlock.SetTexture("_VATTangentTexture", animatorController.VATTangent);
-
         SetState(animatorController.States[0]);
         ApplyPropertyBlock();
     }
     protected virtual void SetRenderer(MeshRenderer rend)
     {
         this.renderer = rend;
+        this.renderer.material = animatorController.Mat;
         Bounds temp = this.renderer.localBounds;
         temp.extents = animatorController.BoundsScale * this.renderer.localBounds.extents;
         this.renderer.localBounds = temp;

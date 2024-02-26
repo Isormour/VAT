@@ -12,16 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b8bef0da7c84754d86b5c2b2f5046da, type: 3}
   m_Name: VAT_CONTROLLER_GobsFBX
   m_EditorClassIdentifier: 
-  VATPosition: {fileID: 2800000, guid: 1625d990ae9be8049881460585769636, type: 2}
-  VATNormal: {fileID: 2800000, guid: d6c170d4666a29140ad765911a5aa401, type: 2}
-  VATTangent: {fileID: 2800000, guid: 17b61f42aa86ae44f9f78f8f654d653a, type: 2}
   States:
   - StateName: Running
-    VAT: {fileID: 11400000, guid: 075873f7ab3a7de42ad5c786e7a129a3, type: 2}
+    VAT: {fileID: 11400000, guid: 3846aa70cc843754992bebdbee435365, type: 2}
     Transitions:
-    - {fileID: 11400000, guid: c6fbbac4db7e89b41a7d722ba6a8e838, type: 2}
+    - {fileID: 11400000, guid: 4d1492907bec80545a668e41b1353b9d, type: 2}
   - StateName: Punching
-    VAT: {fileID: 11400000, guid: feaaceb605477cf41a65428f8d48aff4, type: 2}
+    VAT: {fileID: 11400000, guid: c3a7f1376f9412346a19025b19897486, type: 2}
     Transitions:
-    - {fileID: 11400000, guid: 37f06f375d3bc67458580d62774ef27a, type: 2}
+    - {fileID: 11400000, guid: a2e9c3eaa0676134da9ef2959dce20d8, type: 2}
   BoundsScale: 100
+  Mat: {fileID: 2100000, guid: 66382d086e0fba54982b57e7d57ae8c5, type: 2}

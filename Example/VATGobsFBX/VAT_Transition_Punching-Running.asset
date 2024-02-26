@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   From:
     StateName: Punching
-    VAT: {fileID: 11400000, guid: feaaceb605477cf41a65428f8d48aff4, type: 2}
+    VAT: {fileID: 11400000, guid: c3a7f1376f9412346a19025b19897486, type: 2}
     Transitions:
     - {fileID: 11400000}
   To:
     StateName: Running
-    VAT: {fileID: 11400000, guid: 075873f7ab3a7de42ad5c786e7a129a3, type: 2}
+    VAT: {fileID: 11400000, guid: 3846aa70cc843754992bebdbee435365, type: 2}
     Transitions:
-    - {fileID: 11400000, guid: c6fbbac4db7e89b41a7d722ba6a8e838, type: 2}
-  Transition: {fileID: 11400000, guid: e1756bb5d2d0bc94ab89834fde25b3a4, type: 2}
+    - {fileID: 11400000, guid: 4d1492907bec80545a668e41b1353b9d, type: 2}
+  Transition: {fileID: 11400000, guid: 5bc5ccb4d06afd144be04a97022603f5, type: 2}
   FrameStart: 0
   TransitionDuration: 0.25
   TransitionOffset: 0

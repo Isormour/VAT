@@ -24,7 +24,6 @@ public class VATIndirectRenderer : MonoBehaviour
         {
             structGroups.Add(keyPair, new VATGroupRenderer(keyPair));
         }
-
         structGroups[keyPair].AddAnimator(animatorVATIndirect);
     }
 

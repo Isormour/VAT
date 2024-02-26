@@ -6,10 +6,10 @@ public class AnimatorVATIndirect : AnimatorVAT
     public Mesh mesh { private set; get; }
     public Material mat { private set; get; }
     public Transform owner { private set; get; }
-    public AnimatorVATIndirect(MaterialPropertyBlock matProperties,Transform owner,Material mat,Mesh mesh, AnimatorControllerVAT animatorController): base(matProperties,null,animatorController) 
+    public AnimatorVATIndirect(MaterialPropertyBlock matProperties,Transform owner, AnimatorControllerVATIndirect animatorController): base(matProperties,null,animatorController) 
     {
-        this.mesh = mesh;
-        this.mat = mat;
+        this.mesh = animatorController.Mesh;
+        this.mat = animatorController.Mat;
         this.owner = owner;
         VATIndirectRenderer.Instance.AddObjectToRender<VATGroupRenderer.BasicInstancedParams>(this);
     }
