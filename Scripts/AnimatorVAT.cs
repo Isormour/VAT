@@ -12,7 +12,7 @@ public class AnimatorVAT
     public int eventIndex { protected set; get; } = 0;
     public AnimatorControllerVAT animatorController { private set; get; }
     public MeshRenderer renderer { private set; get; }
-    public float SpeedMultiplier { private set; get; }  = 1;
+    public float SpeedMultiplier = 1;
     public delegate void AnimationVATEvent(string clipName, string eventName);
     public event AnimationVATEvent OnVATEvent;
     public MaterialPropertyBlock materialBlock { private set; get; }
