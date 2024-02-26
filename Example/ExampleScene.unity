@@ -432,7 +432,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4f041347d1667c548a4a2cd73cf2cea5, type: 2}
+  - {fileID: 2100000, guid: 6a89a11be3127ce49a36897d4c312979, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -475,7 +475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rend: {fileID: 1499532883}
-  animatorController: {fileID: 11400000, guid: 310393c4871521a4c944cc977aa31570, type: 2}
+  animatorController: {fileID: 11400000, guid: 15b9230ecca1ab242b4b2df77b41b5b8, type: 2}
   TimeSpeedMult: 0.5
 --- !u!1001 &1665702475
 PrefabInstance:

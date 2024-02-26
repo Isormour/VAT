@@ -427,7 +427,7 @@ public class AnimationCreator : EditorWindow
         for (int i = 0; i < events.Length; i++)
         {
             AnimationVAT.VATEvent tempEvent = new AnimationVAT.VATEvent();
-            tempEvent.Time = events[i].time / length;
+            tempEvent.TimeNormalized = events[i].time / length;
             tempEvent.Name = events[i].functionName;
             vatEvents[i] = tempEvent;
         }

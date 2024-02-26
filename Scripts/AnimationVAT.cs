@@ -15,7 +15,7 @@ public class AnimationVAT : ScriptableObject
     public float TextureLength { get { return TextureEndTime - TextureStartTime; } }
     [System.Serializable]
     public struct VATEvent {
-        public float Time;
+        public float TimeNormalized;
         public string Name;
     }
 }

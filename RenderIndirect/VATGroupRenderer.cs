@@ -78,5 +78,4 @@ public class VATGroupRenderer : IRenderStruct
     {
         return Matrix4x4.TRS(t.localPosition, t.rotation, t.localScale);
     }
-
 }

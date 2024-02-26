@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AnimDelta: 0.025
   TextureStartTime: 0
-  Events: []
+  Events:
+  - TimeNormalized: 0.40041065
+    Name: TestEvent
   IsLooped: 0
   AnimationSpeed: 1
   Frames: 32

@@ -163,20 +163,22 @@ public class AnimatorVAT
     }
     void CheckAnimationEvents()
     {
-        if (currentState.VAT.Events.Length <= 0)
+        AnimationVAT.VATEvent[] events = currentState.VAT.Events;
+        if (events.Length <= 0)
         {
             return;
         }
-        if (eventIndex >= currentState.VAT.Events.Length)
+        if (eventIndex >= events.Length)
         {
             return;
         }
-        if (currentState.VAT.Events[eventIndex].Time < currentState.VAT.TextureStartTime + textureTime)
+        float eventTime = events[eventIndex].TimeNormalized * currentState.VAT.Duration;
+        if (eventTime < textureTime)
         {
-            OnVATEvent?.Invoke(currentState.StateName, currentState.VAT.Events[eventIndex].Name);
+            Debug.Log("On Event = "+ events[eventIndex].Name);
+            OnVATEvent?.Invoke(currentState.StateName, events[eventIndex].Name);
             eventIndex++;
         }
-
     }
 }
 [System.Serializable]
