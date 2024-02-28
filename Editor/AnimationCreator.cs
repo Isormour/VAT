@@ -410,6 +410,9 @@ public class AnimationCreator : EditorWindow
         Graphics.CopyTexture(textures[0], posTex);
         Graphics.CopyTexture(textures[1], normTex);
         Graphics.CopyTexture(textures[2], tanTex);
+        posTex.wrapMode = TextureWrapMode.Clamp;
+        normTex.wrapMode = TextureWrapMode.Clamp;
+        tanTex.wrapMode = TextureWrapMode.Clamp;
 
         AssetDatabase.CreateAsset(posTex, Path.Combine(subFolderPath, textures[0].name + ".asset"));
         AssetDatabase.CreateAsset(normTex, Path.Combine(subFolderPath, textures[1].name + ".asset"));
