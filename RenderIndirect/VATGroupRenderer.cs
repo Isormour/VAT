@@ -64,10 +64,14 @@ public class VATGroupRenderer : IRenderStruct
         BasicInstancedParams[] objParams = new BasicInstancedParams[instances];
         for (int i = 0; i < objParams.Length; i++)
         {
-            objParams[i]= new BasicInstancedParams();
-            objParams[i].animationTime = objectsToRender[i].textureTime;
-            objParams[i].transformMatrix = GetMatrixFromTransform(objectsToRender[i].owner);
+            objParams[i] = new BasicInstancedParams();
+            if (objectsToRender[i].enabled)
+            {
+                objParams[i].animationTime = objectsToRender[i].textureTime;
+                objParams[i].transformMatrix = GetMatrixFromTransform(objectsToRender[i].owner);
+            }
         }
+       
         buffer.SetData(objParams);
     }
     public int GetStructSize()

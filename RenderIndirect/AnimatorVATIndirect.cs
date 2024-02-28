@@ -6,6 +6,11 @@ public class AnimatorVATIndirect : AnimatorVAT
     public Mesh mesh { private set; get; }
     public Material mat { private set; get; }
     public Transform owner { private set; get; }
+    public bool enabled { private set; get; }
+    public void SetEnabled(bool v)
+    {
+        enabled = v;
+    }
     public AnimatorVATIndirect(MaterialPropertyBlock matProperties,Transform owner, AnimatorControllerVATIndirect animatorController): base(matProperties,null,animatorController) 
     {
         this.mesh = animatorController.Mesh;
