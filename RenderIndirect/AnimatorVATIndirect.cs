@@ -24,10 +24,10 @@ public class AnimatorVATIndirect : AnimatorVAT
     protected override void UpdateCurrentState()
     {
         float animEnd = currentState.VAT.TextureEndTime;
-        float currentTime = currentState.VAT.TextureStartTime + textureTime;
+        float currentTime = currentState.VAT.TextureStartTime + animationTime;
         if (!inTransition && currentState.VAT.IsLooped && currentTime >= animEnd)
         {
-            textureTime = 0;
+            animationTime = 0;
             eventIndex = 0;
         }
     }

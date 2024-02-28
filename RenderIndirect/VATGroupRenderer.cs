@@ -76,6 +76,6 @@ public class VATGroupRenderer : IRenderStruct
     }
     Matrix4x4 GetMatrixFromTransform(Transform t)
     {
-        return Matrix4x4.TRS(t.localPosition, t.rotation, t.localScale);
+        return Matrix4x4.TRS(t.position, t.rotation, t.localScale);
     }
 }
