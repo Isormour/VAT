@@ -2,29 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VATGroupRenderer : IRenderStruct
+public class VATGroupRenderer 
 {
     GraphicsBuffer commandBuf;
     GraphicsBuffer.IndirectDrawIndexedArgs[] commandData;
     ComputeBuffer paramsBuffer;
-    int instances;
+    protected int instances;
     Tuple<Mesh, Material> group;
-    List<AnimatorVATIndirect> objectsToRender;
-
-   public struct BasicInstancedParams
+    protected List<AnimatorVATIndirect> objectsToRender;
+    const int RenderInstancesCount = 1024;
+    public delegate void BufferSetter(ComputeBuffer buffer, List<AnimatorVATIndirect> objectsToRender,int instanceCount);
+    BufferSetter bufferParamSetter;
+    public struct BasicInstancedParams
     {
         public Matrix4x4 transformMatrix;
         public float animationTime;
     }
-    public VATGroupRenderer(Tuple<Mesh, Material> group)
+    public VATGroupRenderer(Tuple<Mesh, Material> group,Type paramType, BufferSetter bufferSetter)
     {
         this.group = group;
         this.instances = 0;
         this.commandBuf = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
         this.commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[1];
         objectsToRender = new List<AnimatorVATIndirect>();
+        int paramStructSize = GetStructSize(paramType);
+        this.paramsBuffer = new ComputeBuffer(RenderInstancesCount, paramStructSize);
+        this.bufferParamSetter = bufferSetter;
     }
-
+    int GetStructSize(Type paramType)
+    {
+        return System.Runtime.InteropServices.Marshal.SizeOf(paramType);
+    }
     public void Deinitialize()
     {
         commandBuf?.Release();
@@ -38,48 +46,19 @@ public class VATGroupRenderer : IRenderStruct
 
         rp.worldBounds = new Bounds(Vector3.zero, 10000 * Vector3.one); // use tighter bounds for better FOV culling
         rp.matProps = new MaterialPropertyBlock();
-        SetParamsBufferData(paramsBuffer);
+        bufferParamSetter(paramsBuffer,objectsToRender, instances);
         rp.matProps.SetBuffer("_ParamsBuffer", paramsBuffer);
 
-        for (int i = 0; i < 1; i++)
-        {
-            commandData[i].indexCountPerInstance = group.Item1.GetIndexCount(0);
-            commandData[i].instanceCount = (uint)instances;
-        }
+        commandData[0].indexCountPerInstance = group.Item1.GetIndexCount(0);
+        commandData[0].instanceCount = (uint)instances;
+      
         commandBuf.SetData(commandData);
         Graphics.RenderMeshIndirect(rp, group.Item1, commandBuf, 1);
     }
 
     internal void AddAnimator(AnimatorVATIndirect vat)
     {
-        this.paramsBuffer?.Release();
         objectsToRender.Add(vat);
         instances = objectsToRender.Count;
-        int size = GetStructSize();
-        this.paramsBuffer = new ComputeBuffer(instances, size);
-    }
-
-    public void SetParamsBufferData(UnityEngine.ComputeBuffer buffer)
-    {
-        BasicInstancedParams[] objParams = new BasicInstancedParams[instances];
-        for (int i = 0; i < objParams.Length; i++)
-        {
-            objParams[i] = new BasicInstancedParams();
-            if (objectsToRender[i].enabled)
-            {
-                objParams[i].animationTime = objectsToRender[i].textureTime;
-                objParams[i].transformMatrix = GetMatrixFromTransform(objectsToRender[i].owner);
-            }
-        }
-       
-        buffer.SetData(objParams);
-    }
-    public int GetStructSize()
-    {
-        return System.Runtime.InteropServices.Marshal.SizeOf(typeof(BasicInstancedParams));
-    }
-    Matrix4x4 GetMatrixFromTransform(Transform t)
-    {
-        return Matrix4x4.TRS(t.position, t.rotation, t.localScale);
     }
 }

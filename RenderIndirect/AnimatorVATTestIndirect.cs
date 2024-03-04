@@ -14,6 +14,7 @@ public class AnimatorVATTestIndirect : MonoBehaviour
         CashedTransform = this.transform;
         MaterialPropertyBlock matProperties = new MaterialPropertyBlock();
         vat = new AnimatorVATIndirect(matProperties,this.transform,animatorController);
+        vat.SetEnabled(true);
     }
 
     // Update is called once per frame

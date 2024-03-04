@@ -36,4 +36,8 @@ public class AnimatorVATIndirect : AnimatorVAT
             eventIndex = 0;
         }
     }
+    public Matrix4x4 GetMatrixFromTransform()
+    {
+        return Matrix4x4.TRS(owner.position, owner.rotation, owner.localScale);
+    }
 }

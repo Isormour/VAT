@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6ae95b327994448a33c98e50ea3395, type: 3}
+  m_Name: VAT_CONTROLLER_GobsFBX
+  m_EditorClassIdentifier: 
+  States:
+  - StateName: Running
+    VAT: {fileID: 11400000, guid: 3846aa70cc843754992bebdbee435365, type: 2}
+    Transitions:
+    - {fileID: 11400000, guid: 4d1492907bec80545a668e41b1353b9d, type: 2}
+  - StateName: Punching
+    VAT: {fileID: 11400000, guid: c3a7f1376f9412346a19025b19897486, type: 2}
+    Transitions:
+    - {fileID: 11400000, guid: a2e9c3eaa0676134da9ef2959dce20d8, type: 2}
+  BoundsScale: 100
+  Mat: {fileID: 2100000, guid: 2fcad1bfc0ed4f14c81478a78553a108, type: 2}
+  Mesh: {fileID: -1138839944210308048, guid: 88a7db8df1d2208468f0f01a1fb565c7, type: 3}

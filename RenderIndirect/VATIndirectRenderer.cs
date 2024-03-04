@@ -2,32 +2,35 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-public class VATIndirectRenderer : MonoBehaviour 
+public abstract class VATIndirectRenderer : MonoBehaviour 
 {
     public static VATIndirectRenderer Instance;
-    Dictionary<Type, Dictionary<Tuple<Mesh, Material>,VATGroupRenderer>> RenderersByStructType;
+   protected Dictionary<Type, Dictionary<Tuple<Mesh, Material>,VATGroupRenderer>> RenderersByStructType;
 
     internal void AddObjectToRender<T>(AnimatorVATIndirect animatorVATIndirect)
     {
-        if (!RenderersByStructType.ContainsKey(typeof(T)))
-        {
-            RenderersByStructType.Add(typeof(T), new Dictionary<Tuple<Mesh, Material>, VATGroupRenderer>());
-        }
-        
-        Dictionary<Tuple<Mesh, Material>, VATGroupRenderer> structGroups = RenderersByStructType[typeof(T)];
-       
+        Dictionary<Tuple<Mesh, Material>, VATGroupRenderer> structGroups = RenderersByStructType[typeof(T)];  
         Material mat = animatorVATIndirect.mat;
         Mesh mesh = animatorVATIndirect.mesh;
         Tuple<Mesh, Material> keyPair = new Tuple<Mesh, Material>(mesh,mat);
         if (!structGroups.ContainsKey(keyPair))
         {
-            structGroups.Add(keyPair, new VATGroupRenderer(keyPair));
+            Debug.LogError("Struct group not defined");
         }
         structGroups[keyPair].AddAnimator(animatorVATIndirect);
     }
-
-    void Awake()
+    public void AddParamStructGroup(Type structType, Mesh mesh, Material mat,VATGroupRenderer.BufferSetter paramsSetter)
+    {
+        if (!RenderersByStructType.ContainsKey(structType))
+        {
+            RenderersByStructType.Add(structType, new Dictionary<Tuple<Mesh, Material>, VATGroupRenderer>());
+        }
+        Dictionary<Tuple<Mesh, Material>, VATGroupRenderer> structGroups = RenderersByStructType[structType];
+        Tuple<Mesh, Material> keyPair = new Tuple<Mesh, Material>(mesh, mat);
+        structGroups.Add(keyPair, new VATGroupRenderer(keyPair, structType, paramsSetter));
+    }
+   
+    protected virtual void Awake()
     {
         if (Instance != null)
         {
