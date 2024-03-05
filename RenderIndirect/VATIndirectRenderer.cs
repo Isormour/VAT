@@ -7,7 +7,7 @@ public abstract class VATIndirectRenderer : MonoBehaviour
     public static VATIndirectRenderer Instance;
    protected Dictionary<Type, Dictionary<Tuple<Mesh, Material>,VATGroupRenderer>> RenderersByStructType;
 
-    internal void AddObjectToRender<T>(AnimatorVATIndirect animatorVATIndirect)
+    public void AddObjectToRender<T>(AnimatorVATIndirect animatorVATIndirect)
     {
         Dictionary<Tuple<Mesh, Material>, VATGroupRenderer> structGroups = RenderersByStructType[typeof(T)];  
         Material mat = animatorVATIndirect.mat;
